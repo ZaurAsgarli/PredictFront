@@ -156,6 +156,48 @@ a {
   .animate-bounce-in {
     animation: bounceIn 0.8s ease-out;
   }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  /* Swiper Custom Styles */
+  .swiper-button-next,
+  .swiper-button-prev {
+    color: white !important;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+  }
+  
+  .swiper-button-next:hover,
+  .swiper-button-prev:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+  }
+  
+  .swiper-button-next::after,
+  .swiper-button-prev::after {
+    font-size: 20px !important;
+    font-weight: bold;
+  }
+  
+  .swiper-pagination-bullet {
+    background: rgba(255, 255, 255, 0.5) !important;
+    opacity: 1 !important;
+    width: 12px !important;
+    height: 12px !important;
+    transition: all 0.3s ease;
+  }
+  
+  .swiper-pagination-bullet-active {
+    background: white !important;
+    width: 32px !important;
+    border-radius: 6px !important;
+  }
 }
 
 @layer utilities {
@@ -207,6 +249,15 @@ a {
   100% {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
   }
 }
 

@@ -1,7 +1,15 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TrendingUp, Users, Trophy, Zap, ArrowRight } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import 'swiper/css/effect-fade';
 import EventCard from '../src/components/EventCard';
+import GooeyBlob from '../src/components/GooeyBlob';
+import OddsGlobe from '../src/components/Three/OddsGlobe';
 import { eventsService } from '../src/services/events';
 import { authService } from '../src/services/auth';
 
@@ -25,18 +33,79 @@ export default function Home() {
     }
   };
 
+  // Sample images for the slider - you can replace these with your actual images
+  const sliderImages = [
+    {
+      id: 1,
+      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1920&q=80',
+      title: 'Make Smart Predictions',
+      subtitle: 'Use your knowledge to predict outcomes',
+    },
+    {
+      id: 2,
+      image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1920&q=80',
+      title: 'Compete & Win',
+      subtitle: 'Join the leaderboard and earn rewards',
+    },
+    {
+      id: 3,
+      image: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1920&q=80',
+      title: 'Join the Community',
+      subtitle: 'Connect with fellow predictors',
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Image Slider Section */}
+      <section className="relative w-full h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
+        <Swiper
+          modules={[Navigation, Pagination, Autoplay, EffectFade]}
+          spaceBetween={0}
+          slidesPerView={1}
+          navigation
+          pagination={{ clickable: true }}
+          autoplay={{
+            delay: 5000,
+            disableOnInteraction: false,
+          }}
+          effect="fade"
+          fadeEffect={{ crossFade: true }}
+          loop={true}
+          className="h-full w-full"
+        >
+          {sliderImages.map((slide) => (
+            <SwiperSlide key={slide.id} className="relative">
+              <div
+                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: `url(${slide.image})` }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-900/80 via-gray-900/60 to-gray-900/80"></div>
+              </div>
+              <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8">
+                <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 animate-fade-in">
+                  {slide.title}
+                </h2>
+                <p className="text-xl md:text-2xl text-gray-200 max-w-2xl animate-slide-up">
+                  {slide.subtitle}
+                </p>
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </section>
+
       {/* Hero Section */}
-      <section className="relative bg-gray-800 text-white pt-32 pb-24 overflow-hidden">
+      <section className="relative bg-gray-800 text-white pt-32 pb-24 overflow-hidden min-h-[600px]">
         {/* Background Elements */}
         <div className="absolute inset-0 bg-gray-700/20"></div>
-        <div className="absolute top-0 left-0 w-full h-full">
+        
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
           <div className="absolute top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-float"></div>
           <div className="absolute bottom-20 right-10 w-96 h-96 bg-gray-600/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center animate-fade-in">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl mb-8 animate-bounce-in">
               <TrendingUp className="h-10 w-10 text-white" />
@@ -65,6 +134,44 @@ export default function Home() {
                 </Link>
               </div>
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* 3D Odds Globe Section */}
+      <section className="relative bg-gradient-to-b from-blue-50 to-white dark:from-slate-900 dark:to-gray-900 py-20 overflow-hidden">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center animate-fade-in mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+              Experience the Future
+            </h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+              Interactive 3D predictions powered by cutting-edge technology
+            </p>
+          </div>
+          <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20 border border-blue-200/20 dark:border-purple-500/20">
+            <OddsGlobe
+              outcomes={[
+                { id: 1, name: 'Team A Wins', odds: 2.1 },
+                { id: 2, name: 'Team B Wins', odds: 1.8 },
+                { id: 3, name: 'Draw', odds: 3.4 },
+                { id: 4, name: 'Over 2.5 Goals', odds: 1.9 },
+                { id: 5, name: 'Under 2.5 Goals', odds: 2.2 },
+                { id: 6, name: 'Both Score', odds: 1.7 },
+              ]}
+              size={2.5}
+              autoRotate={true}
+              onSelect={(id) => {
+                console.log('Selected outcome:', id);
+                // Navigate to events page or show a message
+              }}
+              className="w-full"
+            />
+          </div>
+          <div className="text-center mt-8 animate-fade-in">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Rotate, zoom, and explore prediction options in 3D • Click any option to interact
+            </p>
           </div>
         </div>
       </section>

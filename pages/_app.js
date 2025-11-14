@@ -8,7 +8,7 @@ function MyApp({ Component, pageProps }) {
     <ThemeProvider>
       <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
         <Navbar />
-        <main className="flex-grow">
+        <main className="flex-grow pt-20 md:pt-24">
           <Component {...pageProps} />
         </main>
         <Footer />

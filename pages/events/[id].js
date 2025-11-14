@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { Calendar, Users, TrendingUp, ArrowLeft, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import PredictionForm from '../../src/components/PredictionForm';
+import OddsGlobe from '../../src/components/Three/OddsGlobe';
 import { eventsService } from '../../src/services/events';
 import { predictionsService } from '../../src/services/predictions';
 import { authService } from '../../src/services/auth';
@@ -60,6 +61,29 @@ export default function EventDetail() {
       setSubmitting(false);
     }
   };
+
+  const handleOptionSelect = (optionId) => {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+    
+    const selectedOption = event.options?.find(opt => opt.id === optionId);
+    if (selectedOption) {
+      setShowPredictionForm(true);
+      // You can pre-fill the form with the selected option if needed
+    }
+  };
+
+  // Transform event options to OddsGlobe format
+  const globeOutcomes = useMemo(() => {
+    if (!event?.options) return [];
+    return event.options.map(option => ({
+      id: option.id,
+      name: option.name,
+      odds: option.odds || parseFloat((Math.random() * 2 + 1).toFixed(2)), // Fallback odds if not provided
+    }));
+  }, [event?.options]);
 
   if (loading) {
     return (
@@ -173,6 +197,27 @@ export default function EventDetail() {
                 </p>
               </div>
             </div>
+
+            {/* 3D Odds Visualization */}
+            {event.options && event.options.length > 0 && (
+              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-soft p-8 border border-white/20 dark:border-gray-700/20 animate-slide-up overflow-hidden">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 gradient-text">
+                  3D Odds Visualization
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  Explore prediction options in 3D. Click on any option to make a prediction.
+                </p>
+                <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-slate-900/50 dark:to-purple-900/50">
+                  <OddsGlobe
+                    outcomes={globeOutcomes}
+                    size={2.5}
+                    autoRotate={true}
+                    onSelect={handleOptionSelect}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Prediction Statistics */}
             {predictions.length > 0 && (

@@ -196,44 +196,70 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {isOpen && (
-        <div className="md:hidden glass-dark border-t border-gray-200/20 dark:border-gray-700/20">
+        <div className={`md:hidden border-t ${
+          scrolled 
+            ? 'bg-gray-800/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-700/20' 
+            : 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-200/20 dark:border-gray-700/20'
+        }`}>
           <div className="px-4 pt-4 pb-6 space-y-2">
             <Link
               href="/"
-              className="block text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+              className={`block px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
+                scrolled
+                  ? 'text-white hover:text-gray-200 hover:bg-gray-700/50'
+                  : 'text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+              }`}
               onClick={() => setIsOpen(false)}
             >
               Home
             </Link>
             <Link
               href="/events"
-              className="block text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+              className={`block px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
+                scrolled
+                  ? 'text-white hover:text-gray-200 hover:bg-gray-700/50'
+                  : 'text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+              }`}
               onClick={() => setIsOpen(false)}
             >
               Events
             </Link>
             <Link
               href="/predictions"
-              className="block text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+              className={`block px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
+                scrolled
+                  ? 'text-white hover:text-gray-200 hover:bg-gray-700/50'
+                  : 'text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+              }`}
               onClick={() => setIsOpen(false)}
             >
               My Predictions
             </Link>
             <Link
               href="/leaderboard"
-              className="block text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+              className={`block px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
+                scrolled
+                  ? 'text-white hover:text-gray-200 hover:bg-gray-700/50'
+                  : 'text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+              }`}
               onClick={() => setIsOpen(false)}
             >
               Leaderboard
             </Link>
             {/* Theme Toggle for Mobile */}
-            <div className="border-t border-gray-200/20 dark:border-gray-700/20 pt-4 mt-4">
+            <div className={`border-t pt-4 mt-4 ${
+              scrolled ? 'border-gray-700/20' : 'border-gray-200/20 dark:border-gray-700/20'
+            }`}>
               <button
                 onClick={() => {
                   toggleTheme();
                   setIsOpen(false);
                 }}
-                className="flex items-center space-x-3 w-full text-left text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+                className={`flex items-center space-x-3 w-full text-left px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
+                  scrolled
+                    ? 'text-white hover:text-gray-200 hover:bg-gray-700/50'
+                    : 'text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+                }`}
               >
                 {mounted && (
                   theme === 'dark' ? (
@@ -253,10 +279,16 @@ export default function Navbar() {
 
             {user ? (
               <>
-                <div className="border-t border-gray-200/20 dark:border-gray-700/20 pt-4 mt-4">
+                <div className={`border-t pt-4 mt-4 ${
+                  scrolled ? 'border-gray-700/20' : 'border-gray-200/20 dark:border-gray-700/20'
+                }`}>
                   <Link
                     href="/profile"
-                    className="flex items-center space-x-3 text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+                    className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
+                      scrolled
+                        ? 'text-white hover:text-gray-200 hover:bg-gray-700/50'
+                        : 'text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+                    }`}
                     onClick={() => setIsOpen(false)}
                   >
                     <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
@@ -269,7 +301,11 @@ export default function Navbar() {
                       handleLogout();
                       setIsOpen(false);
                     }}
-                    className="flex items-center space-x-3 w-full text-left text-error-600 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 hover:bg-error-50 dark:hover:bg-error-900/20"
+                    className={`flex items-center space-x-3 w-full text-left px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
+                      scrolled
+                        ? 'text-red-300 hover:text-red-200 hover:bg-red-900/20'
+                        : 'text-error-600 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300 hover:bg-error-50 dark:hover:bg-error-900/20'
+                    }`}
                   >
                     <LogOut className="h-5 w-5" />
                     <span>Logout</span>
@@ -277,10 +313,16 @@ export default function Navbar() {
                 </div>
               </>
             ) : (
-              <div className="border-t border-gray-200/20 dark:border-gray-700/20 pt-4 mt-4 space-y-2">
+              <div className={`border-t pt-4 mt-4 space-y-2 ${
+                scrolled ? 'border-gray-700/20' : 'border-gray-200/20 dark:border-gray-700/20'
+              }`}>
                 <Link
                   href="/login"
-                  className="block text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+                  className={`block px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
+                    scrolled
+                      ? 'text-white hover:text-gray-200 hover:bg-gray-700/50'
+                      : 'text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+                  }`}
                   onClick={() => setIsOpen(false)}
                 >
                   Login
