@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Dark blue background -->
+  <rect width="64" height="64" fill="#0a1628"/>
+  
+  <!-- Graph line - starts bottom left, dips, then goes up to top right -->
+  <path d="M 8 56 L 20 56 L 24 58 L 32 20 L 56 8" 
+        stroke="#1e3a5f" 
+        stroke-width="3" 
+        fill="none" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+  
+  <!-- Arrow tip at the end -->
+  <path d="M 50 14 L 56 8 L 52 12" 
+        stroke="#1e3a5f" 
+        stroke-width="3" 
+        fill="none" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+  
+  <!-- Large star (outline) at the peak -->
+  <path d="M 32 8 L 33.5 12 L 38 12.5 L 34.5 15.5 L 35.5 20 L 32 17 L 28.5 20 L 29.5 15.5 L 26 12.5 L 30.5 12 Z" 
+        stroke="#3b82f6" 
+        stroke-width="1.5" 
+        fill="none"/>
+  
+  <!-- Small solid star (left) -->
+  <path d="M 24 14 L 24.8 16 L 27 16.3 L 25.2 17.8 L 25.8 20 L 24 18.5 L 22.2 20 L 22.8 17.8 L 21 16.3 L 23.2 16 Z" 
+        fill="#3b82f6"/>
+  
+  <!-- Small solid star (right) -->
+  <path d="M 40 10 L 40.6 11.5 L 42.2 11.7 L 41 12.8 L 41.4 14.5 L 40 13.5 L 38.6 14.5 L 39 12.8 L 37.8 11.7 L 39.4 11.5 Z" 
+        fill="#3b82f6"/>
+</svg>
+
