@@ -70,7 +70,7 @@ export default function Profile() {
                   </h1>
                   {rank && (
                     <p className="text-gray-600 dark:text-gray-400">
-                      Rank #{rank.rank} • {rank.total_points.toLocaleString()} points
+                      Rank #{rank.rank} • {(rank.total_points ?? 0).toLocaleString()} points
                     </p>
                   )}
                 </div>

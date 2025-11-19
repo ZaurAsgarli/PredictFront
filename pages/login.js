@@ -33,12 +33,25 @@ export default function Login() {
 
     setLoading(true);
     try {
-      await authService.login(formData.email, formData.password);
-      router.push('/');
+      const response = await authService.login(formData.email, formData.password);
+      const user = response.user || JSON.parse(localStorage.getItem('user') || '{}');
+      
+      // Redirect based on role
+      if (user.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/');
+      }
       window.location.reload(); // Reload to update navbar
     } catch (error) {
+      // Extract error message from backend response
+      const errorMessage = error.response?.data?.error ||
+                          error.response?.data?.message ||
+                          error.response?.data?.non_field_errors?.[0] ||
+                          error.message ||
+                          'Invalid credentials. Please try again.';
       setErrors({
-        submit: error.response?.data?.message || 'Invalid credentials. Please try again.',
+        submit: errorMessage,
       });
     } finally {
       setLoading(false);

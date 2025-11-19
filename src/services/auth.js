@@ -4,8 +4,10 @@ export const authService = {
   // Login user
   login: async (email, password) => {
     const response = await api.post('/auth/login/', { email, password });
-    if (response.data.token && typeof window !== 'undefined') {
-      localStorage.setItem('token', response.data.token);
+    // Backend returns tokens: { access, refresh }
+    const accessToken = response.data.tokens?.access || response.data.token;
+    if (accessToken && typeof window !== 'undefined') {
+      localStorage.setItem('token', accessToken);
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
     return response.data;
@@ -13,9 +15,18 @@ export const authService = {
 
   // Register new user
   signup: async (userData) => {
-    const response = await api.post('/auth/signup/', userData);
-    if (response.data.token && typeof window !== 'undefined') {
-      localStorage.setItem('token', response.data.token);
+    // Backend expects password_confirm field
+    const signupData = {
+      username: userData.username,
+      email: userData.email,
+      password: userData.password,
+      password_confirm: userData.password_confirm || userData.password, // Use password_confirm if provided, otherwise use password
+    };
+    const response = await api.post('/auth/signup/', signupData);
+    // Backend returns tokens: { access, refresh }
+    const accessToken = response.data.tokens?.access || response.data.token;
+    if (accessToken && typeof window !== 'undefined') {
+      localStorage.setItem('token', accessToken);
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
     return response.data;

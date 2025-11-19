@@ -50,16 +50,33 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      await authService.signup({
+      const response = await authService.signup({
         username: formData.username,
         email: formData.email,
         password: formData.password,
+        password_confirm: formData.confirmPassword, // Send confirmPassword as password_confirm
       });
-      router.push('/');
+      const user = response.user || JSON.parse(localStorage.getItem('user') || '{}');
+      
+      // Redirect based on role (new users will be 'user' by default)
+      if (user.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/');
+      }
       window.location.reload(); // Reload to update navbar
     } catch (error) {
+      // Extract error message from backend response
+      const errorMessage = error.response?.data?.password?.[0] || 
+                          error.response?.data?.password_confirm?.[0] ||
+                          error.response?.data?.email?.[0] ||
+                          error.response?.data?.username?.[0] ||
+                          error.response?.data?.message ||
+                          error.response?.data?.error ||
+                          error.message ||
+                          'Registration failed. Please try again.';
       setErrors({
-        submit: error.response?.data?.message || 'Registration failed. Please try again.',
+        submit: errorMessage,
       });
     } finally {
       setLoading(false);

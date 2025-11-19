@@ -3,7 +3,8 @@ import api from './api';
 export const leaderboardService = {
   // Get global leaderboard
   getGlobalLeaderboard: async (params = {}) => {
-    const response = await api.get('/leaderboard/', { params });
+    const response = await api.get('/leaderboard/global/');
+    // Backend returns array directly
     return response.data;
   },
 
