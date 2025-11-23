@@ -102,21 +102,27 @@ npm start
 
 ## 🔌 Backend Integration
 
-This frontend expects a Django REST API with the following endpoints:
+This frontend is integrated with the `predicthub_backend` Django REST API. See `INTEGRATION_GUIDE.md` for detailed information.
 
 ### Authentication
-- `POST /api/auth/login/` - User login
-- `POST /api/auth/signup/` - User registration
+- `POST /api/users/login/` - User login
+- `POST /api/users/signup/` - User registration
+- `GET /api/users/me/` - Get current user
 
-### Events
-- `GET /api/events/` - Get all events (supports filtering)
-- `GET /api/events/:id/` - Get event details
-- `GET /api/events/categories/` - Get event categories
+### Markets (Events)
+- `GET /api/markets/` - Get all markets (supports filtering)
+- `GET /api/markets/:id/` - Get market details
+- `POST /api/markets/create/` - Create a new market
 
-### Predictions
-- `POST /api/predictions/` - Create a prediction
-- `GET /api/predictions/user/:userId/` - Get user's predictions
-- `GET /api/predictions/event/:eventId/` - Get event predictions
+### Trades (Predictions)
+- `POST /api/trades/` - Create a trade/prediction
+- `GET /api/users/me/trades/` - Get user's trades
+- `GET /api/trades/?market_id=:id` - Get trades for a market
+
+### Leaderboard
+- `GET /api/analytics/global/` - Global leaderboard
+- `GET /api/analytics/weekly/` - Weekly leaderboard
+- `GET /api/analytics/monthly/` - Monthly leaderboard
 - `PUT /api/predictions/:id/` - Update a prediction
 - `DELETE /api/predictions/:id/` - Delete a prediction
 - `GET /api/predictions/stats/:userId/` - Get user statistics
