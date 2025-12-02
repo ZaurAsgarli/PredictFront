@@ -22,16 +22,23 @@ export const predictionsService = {
         }
       }
       
+      // Ensure outcome_type is uppercase
+      if (outcomeType) {
+        outcomeType = outcomeType.toUpperCase();
+      }
+      
       const tradeData = {
         market_id: predictionData.eventId || predictionData.event || predictionData.market_id,
         outcome_type: outcomeType || 'YES', // Default to YES if not specified
-        trade_type: predictionData.trade_type || 'buy', // buy or sell
-        amount_staked: predictionData.stake || predictionData.amount || predictionData.amount_staked || 10,
+        trade_type: (predictionData.trade_type || 'buy').toLowerCase(), // buy or sell (lowercase)
+        amount_staked: parseFloat(predictionData.stake || predictionData.amount || predictionData.amount_staked || 10),
       };
       
       const response = await api.post('/trades/', tradeData);
       // Backend returns {trade: {...}, position: {...}, price: {...}} or just trade
-      const tradeData_resp = response.data.trade || response.data;
+      // Check if response is wrapped in success/error format
+      const responseData = response.data.success !== undefined ? response.data.data : response.data;
+      const tradeData_resp = responseData.trade || responseData;
       return transformTradeToPrediction(tradeData_resp);
     } catch (error) {
       console.error('Error creating prediction:', error);
@@ -44,7 +51,9 @@ export const predictionsService = {
     try {
       // Use /users/me/trades/ for current user
       const response = await api.get('/users/me/trades/');
-      const trades = response.data.results || (Array.isArray(response.data) ? response.data : []);
+      // Handle paginated or direct array response
+      const responseData = response.data.success !== undefined ? response.data.data : response.data;
+      const trades = responseData.results || (Array.isArray(responseData) ? responseData : []);
       return trades.map(trade => transformTradeToPrediction(trade));
     } catch (error) {
       console.error('Error fetching user predictions:', error);
@@ -55,11 +64,13 @@ export const predictionsService = {
   // Get predictions for an event (trades for a market)
   getEventPredictions: async (eventId) => {
     try {
-      // Filter trades by market_id
+      // Filter trades by market_id - backend uses 'market' query param
       const response = await api.get('/trades/', {
-        params: { market: eventId } // Backend uses 'market' param, not 'market_id'
+        params: { market: eventId }
       });
-      const trades = response.data.results || (Array.isArray(response.data) ? response.data : []);
+      // Handle paginated or direct array response
+      const responseData = response.data.success !== undefined ? response.data.data : response.data;
+      const trades = responseData.results || (Array.isArray(responseData) ? responseData : []);
       return trades.map(trade => transformTradeToPrediction(trade));
     } catch (error) {
       console.error('Error fetching event predictions:', error);
@@ -145,16 +156,26 @@ function transformTradeToPrediction(trade) {
     ? (trade.outcome_type === market.resolution_outcome ? 'won' : 'lost')
     : 'pending';
   
+  // Calculate confidence from price_at_execution if available
+  let confidence = 50;
+  if (trade.price_at_execution) {
+    confidence = Math.round(parseFloat(trade.price_at_execution) * 100);
+  } else if (market.prices) {
+    // Fallback to market prices
+    const price = trade.outcome_type === 'YES' 
+      ? parseFloat(market.prices.yes_price || 0.5)
+      : parseFloat(market.prices.no_price || 0.5);
+    confidence = Math.round(price * 100);
+  }
+  
   return {
     id: trade.id,
     event_title: market.title || 'Unknown Event',
-    event_id: market.id,
-    outcome_name: trade.outcome_type,
-    outcome_type: trade.outcome_type,
+    event_id: market.id || trade.market_id,
+    outcome_name: trade.outcome_type || 'YES',
+    outcome_type: trade.outcome_type || 'YES',
     status: status,
-    confidence: trade.price_at_execution 
-      ? Math.round(parseFloat(trade.price_at_execution) * 100) 
-      : 50,
+    confidence: confidence,
     stake: parseFloat(trade.amount_staked) || 0,
     reward: status === 'won' ? parseFloat(trade.amount_staked) * 2 : null,
     created_at: trade.created_at,

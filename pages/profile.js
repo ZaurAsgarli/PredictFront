@@ -110,7 +110,7 @@ export default function Profile() {
               </div>
               <div className="flex items-center text-gray-600 dark:text-gray-400">
                 <Calendar className="h-5 w-5 mr-2" />
-                Joined {user?.created_at || user?.date_joined ? format(new Date(user.created_at || user.date_joined), 'MMM yyyy') : 'N/A'}
+                Joined {user?.created_at ? format(new Date(user.created_at), 'MMM yyyy') : 'N/A'}
               </div>
               <div className="flex items-center text-gray-600 dark:text-gray-400">
                 <Trophy className="h-5 w-5 mr-2" />

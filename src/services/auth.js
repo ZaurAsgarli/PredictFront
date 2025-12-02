@@ -5,33 +5,35 @@ export const authService = {
   login: async (email, password) => {
     const response = await api.post('/users/login/', { email, password });
     // Backend returns: { user: {...}, tokens: { access, refresh } }
-    const accessToken = response.data.tokens?.access || response.data.token;
+    const accessToken = response.data.tokens?.access || response.data.token || response.data.access;
     if (accessToken && typeof window !== 'undefined') {
       localStorage.setItem('token', accessToken);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      // Store user data if available
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
     }
     return response.data;
   },
 
   // Register new user
   signup: async (userData) => {
-    // Backend expects: username, email, password
-    // Include password_confirm if provided (for validation on frontend)
+    // Backend expects: username, email, password, password_confirm
     const signupData = {
       username: userData.username,
       email: userData.email,
       password: userData.password,
+      password_confirm: userData.password_confirm || userData.confirmPassword,
     };
-    // Only include password_confirm if backend requires it
-    if (userData.password_confirm) {
-      signupData.password_confirm = userData.password_confirm;
-    }
     const response = await api.post('/users/signup/', signupData);
     // Backend returns: { user: {...}, tokens: { access, refresh } }
-    const accessToken = response.data.tokens?.access || response.data.token;
+    const accessToken = response.data.tokens?.access || response.data.token || response.data.access;
     if (accessToken && typeof window !== 'undefined') {
       localStorage.setItem('token', accessToken);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      // Store user data if available
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
     }
     return response.data;
   },
@@ -48,10 +50,12 @@ export const authService = {
   getCurrentUser: async () => {
     try {
       const response = await api.get('/users/me/');
-      if (response.data && typeof window !== 'undefined') {
-        localStorage.setItem('user', JSON.stringify(response.data));
+      // Handle wrapped response format
+      const userData = response.data.success !== undefined ? response.data.data : response.data;
+      if (userData && typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(userData));
       }
-      return response.data;
+      return userData;
     } catch (error) {
       // If API call fails, return cached user
       if (typeof window === 'undefined') return null;

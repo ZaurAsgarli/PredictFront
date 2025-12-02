@@ -106,29 +106,33 @@ function transformMarketToEvent(market) {
   let noPrice = 0.5;
   
   if (market.prices) {
-    yesPrice = market.prices.yes_price || 0.5;
-    noPrice = market.prices.no_price || 0.5;
+    yesPrice = parseFloat(market.prices.yes_price) || 0.5;
+    noPrice = parseFloat(market.prices.no_price) || 0.5;
   } else if (market.outcome_tokens && Array.isArray(market.outcome_tokens)) {
     const yesToken = market.outcome_tokens.find(t => t.outcome_type === 'YES');
     const noToken = market.outcome_tokens.find(t => t.outcome_type === 'NO');
-    yesPrice = yesToken?.price || 0.5;
-    noPrice = noToken?.price || 0.5;
+    yesPrice = parseFloat(yesToken?.price) || 0.5;
+    noPrice = parseFloat(noToken?.price) || 0.5;
   }
+  
+  // Calculate participants count from trades if not provided
+  // This is a fallback - backend should provide this
+  const participantsCount = market.participants_count || 0;
   
   return {
     id: market.id,
-    title: market.title,
-    description: market.description,
-    status: market.status,
-    category: market.category,
-    ends_at: market.ends_at,
-    created_at: market.created_at,
+    title: market.title || market.name || 'Untitled Market',
+    description: market.description || '',
+    status: market.status || 'active',
+    category: market.category || null,
+    ends_at: market.ends_at || market.end_date,
+    created_at: market.created_at || market.created_date,
     yes_price: yesPrice,
     no_price: noPrice,
-    participants_count: market.participants_count || 0,
-    total_volume: market.liquidity_pool || 0,
-    liquidity_pool: market.liquidity_pool || 0,
-    image: market.image || null,
+    participants_count: participantsCount,
+    total_volume: parseFloat(market.liquidity_pool) || 0,
+    liquidity_pool: parseFloat(market.liquidity_pool) || 0,
+    image: market.image || market.image_url || null,
     // Keep original market data for reference
     _market: market,
   };
