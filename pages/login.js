@@ -33,7 +33,9 @@ export default function Login() {
 
     setLoading(true);
     try {
+      console.log('Login - API Base URL:', process.env.NEXT_PUBLIC_API_URL);
       const response = await authService.login(formData.email, formData.password);
+      console.log('Login response:', response);
       const user = response.user || JSON.parse(localStorage.getItem('user') || '{}');
       
       // Redirect based on role
@@ -44,6 +46,9 @@ export default function Login() {
       }
       window.location.reload(); // Reload to update navbar
     } catch (error) {
+      console.error('Login error:', error);
+      console.error('Login error URL:', error.config?.url);
+      console.error('Login error response:', error.response);
       // Extract error message from backend response
       const errorMessage = error.response?.data?.error ||
                           error.response?.data?.message ||

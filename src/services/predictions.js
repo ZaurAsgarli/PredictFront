@@ -27,13 +27,34 @@ export const predictionsService = {
         outcomeType = outcomeType.toUpperCase();
       }
       
+      // Ensure market_id is a number
+      const marketId = predictionData.market_id || predictionData.eventId || predictionData.event;
+      if (!marketId) {
+        throw new Error('Market ID is required');
+      }
+      
       const tradeData = {
-        market_id: predictionData.eventId || predictionData.event || predictionData.market_id,
+        market_id: typeof marketId === 'string' ? parseInt(marketId, 10) : marketId,
         outcome_type: outcomeType || 'YES', // Default to YES if not specified
         trade_type: (predictionData.trade_type || 'buy').toLowerCase(), // buy or sell (lowercase)
         amount_staked: parseFloat(predictionData.stake || predictionData.amount || predictionData.amount_staked || 10),
       };
       
+      // Validate required fields
+      if (!tradeData.market_id || isNaN(tradeData.market_id)) {
+        throw new Error('Invalid market ID');
+      }
+      if (!tradeData.outcome_type || !['YES', 'NO'].includes(tradeData.outcome_type)) {
+        throw new Error('Invalid outcome type. Must be YES or NO');
+      }
+      if (!tradeData.trade_type || !['buy', 'sell'].includes(tradeData.trade_type)) {
+        throw new Error('Invalid trade type. Must be buy or sell');
+      }
+      if (!tradeData.amount_staked || tradeData.amount_staked <= 0) {
+        throw new Error('Amount must be greater than 0');
+      }
+      
+      console.log('Creating trade with data:', tradeData);
       const response = await api.post('/trades/', tradeData);
       // Backend returns {trade: {...}, position: {...}, price: {...}} or just trade
       // Check if response is wrapped in success/error format

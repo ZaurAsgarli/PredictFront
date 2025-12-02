@@ -11,46 +11,10 @@
       "static/chunks/src_components_Loader_jsx.js"
     ]
   },
-  "pages\\index.js -> ../src/components/sections/About": {
-    "id": "pages\\index.js -> ../src/components/sections/About",
-    "files": [
-      "static/chunks/src_components_sections_About_jsx.js"
-    ]
-  },
-  "pages\\index.js -> ../src/components/sections/FeaturedEvents": {
-    "id": "pages\\index.js -> ../src/components/sections/FeaturedEvents",
-    "files": [
-      "static/chunks/src_components_sections_FeaturedEvents_jsx.js"
-    ]
-  },
-  "pages\\index.js -> ../src/components/sections/Features": {
-    "id": "pages\\index.js -> ../src/components/sections/Features",
-    "files": [
-      "static/chunks/src_components_sections_Features_jsx.js"
-    ]
-  },
-  "pages\\index.js -> ../src/components/sections/FooterCTA": {
-    "id": "pages\\index.js -> ../src/components/sections/FooterCTA",
-    "files": [
-      "static/chunks/src_components_sections_FooterCTA_jsx.js"
-    ]
-  },
   "pages\\index.js -> ../src/components/sections/Hero": {
     "id": "pages\\index.js -> ../src/components/sections/Hero",
     "files": [
       "static/chunks/src_components_sections_Hero_jsx.js"
-    ]
-  },
-  "pages\\index.js -> ../src/components/sections/ScrollShowcase": {
-    "id": "pages\\index.js -> ../src/components/sections/ScrollShowcase",
-    "files": [
-      "static/chunks/src_components_sections_ScrollShowcase_jsx.js"
-    ]
-  },
-  "pages\\index.js -> ../src/components/sections/Testimonials": {
-    "id": "pages\\index.js -> ../src/components/sections/Testimonials",
-    "files": [
-      "static/chunks/src_components_sections_Testimonials_jsx.js"
     ]
   },
   "src\\components\\AnimatedCircle.jsx -> animejs/animatable": {
@@ -82,5 +46,9 @@
     "files": [
       "static/chunks/node_modules_react-three_fiber_dist_react-three-fiber_esm_js.js"
     ]
+  },
+  "src\\services\\leaderboard.js -> ./predictions": {
+    "id": "src\\services\\leaderboard.js -> ./predictions",
+    "files": []
   }
 }

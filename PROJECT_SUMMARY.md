@@ -67,7 +67,7 @@ virtual-p/
 │   │   ├── PredictionCard.jsx
 │   │   └── LeaderboardTable.jsx
 │   ├── pages/                  # 8 page components
-│   │   ├── Home.jsx
+│   │   ├── 
 │   │   ├── Events.jsx
 │   │   ├── EventDetail.jsx
 │   │   ├── Predictions.jsx

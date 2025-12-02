@@ -29,6 +29,10 @@ api.interceptors.request.use(
 // Handle 401 errors (unauthorized) and transform responses
 api.interceptors.response.use(
   (response) => {
+    // Debug: Log response for development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('API Response:', response.config.url, response.data);
+    }
     // Backend may wrap responses in {success: true, data: ...} format
     // or return paginated responses with {results: ..., count: ..., next: ..., previous: ...}
     // or return data directly

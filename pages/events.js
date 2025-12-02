@@ -18,9 +18,12 @@ export default function Events() {
   const loadData = async () => {
     try {
       setLoading(true);
+      console.log('Events page - API Base URL:', process.env.NEXT_PUBLIC_API_URL);
       const [eventsData, categoriesData] = await Promise.all([
         eventsService.getAllEvents().catch((err) => {
           console.error('Error loading events:', err);
+          console.error('Error URL:', err.config?.url);
+          console.error('Error response:', err.response);
           return [];
         }),
         eventsService.getCategories().catch((err) => {
@@ -28,6 +31,8 @@ export default function Events() {
           return [];
         }),
       ]);
+      console.log('Events page - Fetched events:', eventsData);
+      console.log('Events page - Fetched categories:', categoriesData);
       setEvents(Array.isArray(eventsData) ? eventsData : []);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {

@@ -1,10 +1,9 @@
 {
+  "/_error": "pages/_error.js",
   "/_app": "pages/_app.js",
   "/_document": "pages/_document.js",
-  "/_error": "pages/_error.js",
-  "/events": "pages/events.js",
   "/": "pages/index.js",
-  "/leaderboard": "pages/leaderboard.js",
-  "/predictions": "pages/predictions.js",
-  "/login": "pages/login.js"
+  "/events/[id]": "pages/events/[id].js",
+  "/events": "pages/events.js",
+  "/profile": "pages/profile.js"
 }

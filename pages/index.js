@@ -1,111 +1,158 @@
-import { useState, useEffect, memo, lazy, Suspense } from 'react';
-import { authService } from '../src/services/auth';
-import { adminApi } from '../src/admin/services/adminApi';
-import ImageSlider from '../src/components/sections/ImageSlider';
+// pages/index.js
+import { useEffect, useState, lazy, Suspense } from "react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import EventCard from "../src/components/EventCard";
+import { eventsService } from "../src/services/events";
 
-// Lazy load all sections for optimal performance
-const Hero = lazy(() => import('../src/components/sections/Hero'));
-const About = lazy(() => import('../src/components/sections/About'));
-const Features = lazy(() => import('../src/components/sections/Features'));
-const FeaturedEvents = lazy(() => import('../src/components/sections/FeaturedEvents'));
-const ScrollShowcase = lazy(() => import('../src/components/sections/ScrollShowcase'));
-const Testimonials = lazy(() => import('../src/components/sections/Testimonials'));
-const FooterCTA = lazy(() => import('../src/components/sections/FooterCTA'));
+// Lazy load Hero 3D components
+const Hero = lazy(() => import("../src/components/sections/Hero"));
 
-// Loading fallback component
-const SectionLoader = () => (
-  <div className="w-full h-96 flex items-center justify-center">
-    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+// Loading fallback for Hero
+const HeroLoader = () => (
+  <div className="w-full h-[60vh] min-h-[600px] flex items-center justify-center bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
+    <div className="w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full animate-spin" />
   </div>
 );
 
-export default function Home() {
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminStats, setAdminStats] = useState({
-    totalMarkets: 0,
-    activeMarkets: 0,
-    totalTrades: 0,
-    pendingDisputes: 0,
-  });
-  const [adminLoading, setAdminLoading] = useState(false);
-  const isAuthenticated = authService.isAuthenticated();
+export default function HomePage() {
+  const [activeMarkets, setActiveMarkets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    checkAdminStatus();
+    const fetchMarkets = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        
+        console.log('API Base URL:', process.env.NEXT_PUBLIC_API_URL);
+
+        // Try to get all events first (more reliable)
+        const allEvents = await eventsService.getAllEvents();
+        console.log('Fetched events:', allEvents);
+        
+        // Filter active events - be more lenient with status matching
+        const activeOnly = allEvents.filter((event) => {
+          if (!event) return false;
+          const s = (event.status || "").toLowerCase();
+          // Accept active, open, running, or empty status
+          // Also accept if status is undefined/null (treat as active)
+          return !s || s === "active" || s === "open" || s === "running" || s === "";
+        });
+
+        // If we have active events, use them; otherwise show all events (up to 6)
+        const marketsToShow = activeOnly.length > 0 ? activeOnly : allEvents;
+        setActiveMarkets(marketsToShow.slice(0, 6));
+      } catch (err) {
+        console.error("Failed to load active markets:", err);
+        console.error("Error response:", err.response);
+        console.error("Error URL:", err.config?.url);
+        const errorMsg = err.response?.data?.detail || err.response?.data?.message || err.message || "Could not load active markets from backend.";
+        setError(errorMsg);
+        // Don't set markets to empty array on error - keep previous state if any
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMarkets();
   }, []);
 
-  const checkAdminStatus = () => {
-    if (typeof window !== 'undefined') {
-      const user = authService.getCurrentUserSync();
-      if (user && user.is_staff) {
-        setIsAdmin(true);
-        loadAdminStats();
-      }
-    }
-  };
-
-  const loadAdminStats = async () => {
-    try {
-      setAdminLoading(true);
-      const [markets, activeMarkets, trades, disputes] = await Promise.all([
-        adminApi.getMarkets().catch(() => ({ results: [] })),
-        adminApi.getMarkets({ status: 'active' }).catch(() => ({ results: [] })),
-        adminApi.getTrades().catch(() => ({ results: [] })),
-        adminApi.getDisputes().catch(() => ({ results: [] })),
-      ]);
-
-      setAdminStats({
-        totalMarkets: markets.results?.length || markets.length || 0,
-        activeMarkets: activeMarkets.results?.length || activeMarkets.length || 0,
-        totalTrades: trades.results?.length || trades.length || 0,
-        pendingDisputes: disputes.results?.filter((d) => d.status === 'pending')?.length || 0,
-      });
-    } catch (error) {
-      console.error('Error loading admin stats:', error);
-    } finally {
-      setAdminLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen">
-      {/* Image Slider Section - Top of page */}
-      <ImageSlider />
-
-      {/* Hero Section - Load immediately */}
-      <Suspense fallback={<SectionLoader />}>
-        <Hero isAuthenticated={isAuthenticated} />
+    <div className="min-h-screen bg-gray-950 text-gray-50">
+      {/* 3D Hero Section - PRESERVED */}
+      <Suspense fallback={<HeroLoader />}>
+        <Hero isAuthenticated={false} />
       </Suspense>
 
-      {/* About Section */}
-      <Suspense fallback={<SectionLoader />}>
-        <About />
-      </Suspense>
+      {/* Backend Snapshot Card - Positioned below hero */}
+      <div className="container mx-auto px-4 mt-8 relative z-10">
+        <div className="max-w-md mx-auto">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/90 backdrop-blur-md p-4 shadow-xl">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-sky-400">
+              Backend snapshot
+            </p>
+            <div className="space-y-3 text-xs text-slate-200">
+              <div className="flex items-center justify-between rounded-lg bg-slate-800/50 px-3 py-2">
+                <span className="text-slate-300">Active markets</span>
+                <span className="font-mono text-sm text-emerald-400">
+                  {loading
+                    ? "…"
+                    : activeMarkets.length > 0
+                    ? activeMarkets.length
+                    : "0"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-slate-800/50 px-3 py-2">
+                <span className="text-slate-300">Status</span>
+                <span className="text-xs font-medium text-sky-300">
+                  {loading
+                    ? "Loading…"
+                    : error
+                    ? "Backend error"
+                    : "Connected"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* Features Section */}
-      <Suspense fallback={<SectionLoader />}>
-        <Features />
-      </Suspense>
+      {/* ACTIVE MARKETS */}
+      <section className="mx-auto max-w-6xl px-4 py-12">
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-white mb-2">Active Markets</h2>
+          <p className="text-gray-400">
+            Browse and trade on real-world events and predictions
+          </p>
+        </div>
 
-      {/* Featured Events Section */}
-      <Suspense fallback={<SectionLoader />}>
-        <FeaturedEvents />
-      </Suspense>
+        {loading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="border border-slate-800 rounded-xl bg-slate-900 p-4 animate-pulse">
+                <div className="h-32 w-full rounded-lg bg-slate-800 mb-3"></div>
+                <div className="h-6 bg-slate-800 rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-slate-800 rounded w-full"></div>
+              </div>
+            ))}
+          </div>
+        )}
 
-      {/* Scroll Showcase Section */}
-      <Suspense fallback={<SectionLoader />}>
-        <ScrollShowcase />
-      </Suspense>
+        {!loading && error && (
+          <div className="border border-red-500/50 rounded-xl bg-slate-900/50 p-8 text-center">
+            <p className="text-red-400 mb-2">Failed to load markets</p>
+            <p className="text-sm text-slate-400">{error}</p>
+          </div>
+        )}
 
-      {/* Testimonials Section */}
-      <Suspense fallback={<SectionLoader />}>
-        <Testimonials />
-      </Suspense>
+        {!loading && !error && activeMarkets.length === 0 && (
+          <div className="border border-slate-800 rounded-xl bg-slate-900/50 p-8 text-center">
+            <p className="text-slate-400">No active markets available at the moment.</p>
+          </div>
+        )}
 
-      {/* Footer CTA Section */}
-      <Suspense fallback={<SectionLoader />}>
-        <FooterCTA />
-      </Suspense>
+        {!loading && !error && activeMarkets.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {activeMarkets.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        )}
+
+        {!loading && activeMarkets.length > 0 && (
+          <div className="mt-8 text-center">
+            <Link
+              href="/events"
+              className="inline-flex items-center justify-center rounded-lg bg-sky-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-md transition hover:bg-sky-400"
+            >
+              View All Markets
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

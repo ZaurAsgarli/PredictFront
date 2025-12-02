@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { ArrowLeft, TrendingUp, TrendingDown, Clock, DollarSign, HelpCircle, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, Area, AreaChart } from 'recharts';
 import { eventsService } from '../../src/services/events';
 import { predictionsService } from '../../src/services/predictions';
 import { authService } from '../../src/services/auth';
@@ -30,6 +31,10 @@ export default function EventDetail() {
   const [amount, setAmount] = useState('');
   const [chartTimeframe, setChartTimeframe] = useState('ALL'); // '1H', '6H', '1D', '1W', '1M', 'ALL'
   const [relatedMarkets, setRelatedMarkets] = useState([]);
+  const [marketContext, setMarketContext] = useState('');
+  const [generatingContext, setGeneratingContext] = useState(false);
+  const [orderBookData, setOrderBookData] = useState([]);
+  const [priceHistory, setPriceHistory] = useState([]);
   const isAuthenticated = authService.isAuthenticated();
 
   useEffect(() => {
@@ -38,6 +43,59 @@ export default function EventDetail() {
       loadRelatedMarkets();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (event) {
+      if (event.description) {
+        setMarketContext(event.description);
+      }
+      // Load order book after event data is available
+      const yesPriceValue = event.yes_price !== undefined ? parseFloat(event.yes_price) : 
+                           (event._market?.prices?.yes_price ? parseFloat(event._market.prices.yes_price) : 0.5);
+      loadOrderBook(yesPriceValue);
+      generatePriceHistory(yesPriceValue);
+    }
+  }, [event, chartTimeframe]);
+
+  const generatePriceHistory = (basePrice) => {
+    // Generate mock price history data based on timeframe
+    const now = new Date();
+    const dataPoints = chartTimeframe === '1H' ? 12 : 
+                      chartTimeframe === '6H' ? 18 : 
+                      chartTimeframe === '1D' ? 24 : 
+                      chartTimeframe === '1W' ? 28 : 
+                      chartTimeframe === '1M' ? 30 : 50;
+    
+    const history = [];
+    for (let i = dataPoints - 1; i >= 0; i--) {
+      const date = new Date(now);
+      if (chartTimeframe === '1H') {
+        date.setMinutes(date.getMinutes() - i * 5);
+      } else if (chartTimeframe === '6H') {
+        date.setMinutes(date.getMinutes() - i * 20);
+      } else if (chartTimeframe === '1D') {
+        date.setHours(date.getHours() - i);
+      } else if (chartTimeframe === '1W') {
+        date.setHours(date.getHours() - i * 6);
+      } else if (chartTimeframe === '1M') {
+        date.setDate(date.getDate() - i);
+      } else {
+        date.setDate(date.getDate() - i * 7);
+      }
+      
+      // Generate price with some variation
+      const variation = (Math.random() - 0.5) * 0.1;
+      const price = Math.max(0.01, Math.min(0.99, basePrice + variation));
+      
+      history.push({
+        time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        price: parseFloat(price.toFixed(2)),
+        timestamp: date.getTime()
+      });
+    }
+    setPriceHistory(history);
+  };
 
   const loadEventData = async () => {
     try {
@@ -62,6 +120,49 @@ export default function EventDetail() {
     }
   };
 
+  const loadOrderBook = (currentYesPrice) => {
+    // Mock order book data - in production, fetch from API
+    const basePrice = currentYesPrice || 0.5;
+    const mockOrders = [
+      { type: 'buy', price: parseFloat((basePrice + 0.01).toFixed(2)), amount: 150, total: parseFloat(((basePrice + 0.01) * 150).toFixed(2)) },
+      { type: 'buy', price: parseFloat((basePrice + 0.02).toFixed(2)), amount: 200, total: parseFloat(((basePrice + 0.02) * 200).toFixed(2)) },
+      { type: 'buy', price: parseFloat((basePrice + 0.03).toFixed(2)), amount: 100, total: parseFloat(((basePrice + 0.03) * 100).toFixed(2)) },
+      { type: 'sell', price: parseFloat((basePrice - 0.01).toFixed(2)), amount: 120, total: parseFloat(((basePrice - 0.01) * 120).toFixed(2)) },
+      { type: 'sell', price: parseFloat((basePrice - 0.02).toFixed(2)), amount: 180, total: parseFloat(((basePrice - 0.02) * 180).toFixed(2)) },
+      { type: 'sell', price: parseFloat((basePrice - 0.03).toFixed(2)), amount: 90, total: parseFloat(((basePrice - 0.03) * 90).toFixed(2)) },
+    ];
+    setOrderBookData(mockOrders);
+  };
+
+  const handleGenerateContext = async () => {
+    setGeneratingContext(true);
+    try {
+      // Simulate API call to generate context
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Generate context based on event data
+      const generatedContext = `Market Analysis for "${event?.title}":
+      
+This prediction market evaluates the likelihood of the stated outcome. Current market sentiment indicates a ${yesProbability}% probability for "Yes" and ${noProbability}% for "No".
+
+Key factors influencing this market:
+- Market liquidity: $${event?.total_volume || 0}
+- Current price: ${yesPrice}¢ (Yes) / ${noPrice}¢ (No)
+- Market participants: ${event?.participants_count || 0} traders
+
+${event?.description || 'This is a synthetic market created for testing and analysis purposes.'}
+
+The market will resolve on ${safeFormatDate(event?.ends_at)}.`;
+      
+      setMarketContext(generatedContext);
+    } catch (error) {
+      console.error('Error generating context:', error);
+      setMarketContext(event?.description || 'Failed to generate context. Please try again.');
+    } finally {
+      setGeneratingContext(false);
+    }
+  };
+
   const handleTrade = async () => {
     if (!isAuthenticated) {
       router.push('/login');
@@ -75,8 +176,18 @@ export default function EventDetail() {
 
     setSubmitting(true);
     try {
+      // Ensure market_id is a number
+      const marketId = parseInt(id, 10);
+      if (isNaN(marketId)) {
+        alert('Invalid market ID');
+        setSubmitting(false);
+        return;
+      }
+
       await predictionsService.createPrediction({
-        event: id,
+        market_id: marketId,
+        eventId: marketId,
+        event: marketId,
         outcome_type: selectedOutcome,
         trade_type: tradeType,
         amount_staked: parseFloat(amount),
@@ -87,8 +198,10 @@ export default function EventDetail() {
       await loadEventData();
     } catch (error) {
       console.error('Error executing trade:', error);
+      console.error('Error details:', error.response?.data);
       const errorMessage = error.response?.data?.error || 
                           error.response?.data?.message ||
+                          error.response?.data?.detail ||
                           error.message || 
                           'Failed to execute trade. Please try again.';
       alert(errorMessage);
@@ -209,7 +322,7 @@ export default function EventDetail() {
               </div>
             </div>
 
-            {/* Current Probability */}
+            {/* Current Probability with Pie Chart */}
             <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm text-gray-400">Current Chance</span>
@@ -224,19 +337,87 @@ export default function EventDetail() {
                   </span>
                 </div>
               </div>
-              <div className="text-5xl font-bold text-blue-400">
-                {yesProbability}%
+              <div className="grid grid-cols-2 gap-6 items-center">
+                <div className="text-5xl font-bold text-blue-400">
+                  {yesProbability}%
+                </div>
+                <div className="h-32">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Yes', value: parseFloat(yesProbability), color: '#22c55e' },
+                          { name: 'No', value: parseFloat(noProbability), color: '#6b7280' }
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={30}
+                        outerRadius={50}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {[
+                          { name: 'Yes', value: parseFloat(yesProbability), color: '#22c55e' },
+                          { name: 'No', value: parseFloat(noProbability), color: '#6b7280' }
+                        ].map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => `${value.toFixed(1)}%`} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
 
-            {/* Price Chart Placeholder */}
+            {/* Price Chart */}
             <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-              <div className="h-64 bg-gray-900 rounded-lg flex items-center justify-center mb-4">
-                <div className="text-center">
-                  <TrendingUp className="w-12 h-12 text-gray-600 mx-auto mb-2" />
-                  <p className="text-gray-500 text-sm">Price Chart</p>
-                  <p className="text-gray-600 text-xs mt-1">Chart visualization coming soon</p>
-                </div>
+              <div className="h-64 mb-4">
+                {priceHistory.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={priceHistory}>
+                      <defs>
+                        <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis 
+                        dataKey={chartTimeframe === 'ALL' || chartTimeframe === '1M' || chartTimeframe === '1W' ? 'date' : 'time'} 
+                        stroke="#9ca3af"
+                        style={{ fontSize: '12px' }}
+                      />
+                      <YAxis 
+                        domain={[0, 1]}
+                        stroke="#9ca3af"
+                        style={{ fontSize: '12px' }}
+                        tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+                      />
+                      <Tooltip 
+                        formatter={(value) => [`${(value * 100).toFixed(2)}%`, 'Price']}
+                        contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
+                        labelStyle={{ color: '#9ca3af' }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="price" 
+                        stroke="#3b82f6" 
+                        strokeWidth={2}
+                        fillOpacity={1} 
+                        fill="url(#colorPrice)" 
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full bg-gray-900 rounded-lg flex items-center justify-center">
+                    <div className="text-center">
+                      <TrendingUp className="w-12 h-12 text-gray-600 mx-auto mb-2" />
+                      <p className="text-gray-500 text-sm">Loading chart...</p>
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* Timeframe Buttons */}
@@ -263,22 +444,62 @@ export default function EventDetail() {
                 <h3 className="text-lg font-semibold">Order Book</h3>
                 <HelpCircle className="w-5 h-5 text-gray-400 cursor-help" />
               </div>
-              <div className="text-sm text-gray-400">
-                Order book data will be displayed here
-              </div>
+              {orderBookData.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-3 gap-4 text-xs text-gray-400 mb-2 pb-2 border-b border-gray-700">
+                    <div>Price</div>
+                    <div>Amount</div>
+                    <div>Total</div>
+                  </div>
+                  {/* Sell Orders (Red) */}
+                  {orderBookData.filter(o => o.type === 'sell').reverse().map((order, idx) => (
+                    <div key={`sell-${idx}`} className="grid grid-cols-3 gap-4 text-sm">
+                      <div className="text-red-400">{order.price.toFixed(2)}¢</div>
+                      <div className="text-gray-300">{order.amount}</div>
+                      <div className="text-gray-300">${order.total.toFixed(2)}</div>
+                    </div>
+                  ))}
+                  {/* Current Price Divider */}
+                  <div className="grid grid-cols-3 gap-4 text-sm py-2 border-y border-gray-600 my-2">
+                    <div className="font-semibold text-blue-400">{yesPrice}¢</div>
+                    <div className="text-gray-400">Current</div>
+                    <div className="text-gray-400">Price</div>
+                  </div>
+                  {/* Buy Orders (Green) */}
+                  {orderBookData.filter(o => o.type === 'buy').map((order, idx) => (
+                    <div key={`buy-${idx}`} className="grid grid-cols-3 gap-4 text-sm">
+                      <div className="text-green-400">{order.price.toFixed(2)}¢</div>
+                      <div className="text-gray-300">{order.amount}</div>
+                      <div className="text-gray-300">${order.total.toFixed(2)}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-400">
+                  No orders available
+                </div>
+              )}
             </div>
 
             {/* Market Context */}
             <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Market Context</h3>
-                <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors">
-                  Generate
+                <button 
+                  onClick={handleGenerateContext}
+                  disabled={generatingContext}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    generatingContext
+                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                >
+                  {generatingContext ? 'Generating...' : 'Generate'}
                 </button>
               </div>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                {event.description || 'No additional context available for this market.'}
-              </p>
+              <div className="text-gray-400 text-sm leading-relaxed whitespace-pre-line">
+                {marketContext || event.description || 'No additional context available for this market. Click Generate to create market analysis.'}
+              </div>
             </div>
 
             {/* Rules */}
@@ -345,7 +566,7 @@ export default function EventDetail() {
                   onClick={() => setSelectedOutcome('NO')}
                   className={`p-6 rounded-xl font-bold text-lg transition-all ${
                     selectedOutcome === 'NO'
-                      ? 'bg-gray-600 text-white shadow-lg scale-105'
+                      ? 'bg-red-600 text-white shadow-lg scale-105'
                       : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   }`}
                 >
