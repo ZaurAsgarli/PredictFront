@@ -7,6 +7,7 @@ import ImageSlider from '../src/components/sections/ImageSlider';
 const Hero = lazy(() => import('../src/components/sections/Hero'));
 const About = lazy(() => import('../src/components/sections/About'));
 const Features = lazy(() => import('../src/components/sections/Features'));
+const FeaturedEvents = lazy(() => import('../src/components/sections/FeaturedEvents'));
 const ScrollShowcase = lazy(() => import('../src/components/sections/ScrollShowcase'));
 const Testimonials = lazy(() => import('../src/components/sections/Testimonials'));
 const FooterCTA = lazy(() => import('../src/components/sections/FooterCTA'));
@@ -84,6 +85,11 @@ export default function Home() {
       {/* Features Section */}
       <Suspense fallback={<SectionLoader />}>
         <Features />
+      </Suspense>
+
+      {/* Featured Events Section */}
+      <Suspense fallback={<SectionLoader />}>
+        <FeaturedEvents />
       </Suspense>
 
       {/* Scroll Showcase Section */}

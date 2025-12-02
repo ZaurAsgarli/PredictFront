@@ -17,14 +17,23 @@ export default function Events() {
 
   const loadData = async () => {
     try {
+      setLoading(true);
       const [eventsData, categoriesData] = await Promise.all([
-        eventsService.getAllEvents(),
-        eventsService.getCategories().catch(() => []),
+        eventsService.getAllEvents().catch((err) => {
+          console.error('Error loading events:', err);
+          return [];
+        }),
+        eventsService.getCategories().catch((err) => {
+          console.error('Error loading categories:', err);
+          return [];
+        }),
       ]);
-      setEvents(eventsData);
-      setCategories(categoriesData);
+      setEvents(Array.isArray(eventsData) ? eventsData : []);
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
-      console.error('Error loading events:', error);
+      console.error('Error loading data:', error);
+      setEvents([]);
+      setCategories([]);
     } finally {
       setLoading(false);
     }

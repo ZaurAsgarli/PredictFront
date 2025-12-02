@@ -26,14 +26,38 @@ api.interceptors.request.use(
   }
 );
 
-// Handle 401 errors (unauthorized)
+// Handle 401 errors (unauthorized) and transform responses
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Backend may wrap responses in {success: true, data: ...} format
+    // or return paginated responses with {results: ..., count: ..., next: ..., previous: ...}
+    // or return data directly
+    if (response.data && typeof response.data === 'object') {
+      // If wrapped in success/data format, extract data
+      if (response.data.success && response.data.data !== undefined) {
+        response.data = response.data.data;
+      }
+      // Paginated responses are fine as-is (they have results array)
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
+    }
+    // Extract error message from backend response
+    if (error.response?.data) {
+      const errorData = error.response.data;
+      // Backend may wrap errors in {success: false, error: ...} or use standard DRF format
+      if (errorData.error) {
+        error.message = errorData.error;
+      } else if (errorData.message) {
+        error.message = errorData.message;
+      } else if (typeof errorData === 'string') {
+        error.message = errorData;
+      }
     }
     return Promise.reject(error);
   }

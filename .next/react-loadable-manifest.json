@@ -17,6 +17,12 @@
       "static/chunks/src_components_sections_About_jsx.js"
     ]
   },
+  "pages\\index.js -> ../src/components/sections/FeaturedEvents": {
+    "id": "pages\\index.js -> ../src/components/sections/FeaturedEvents",
+    "files": [
+      "static/chunks/src_components_sections_FeaturedEvents_jsx.js"
+    ]
+  },
   "pages\\index.js -> ../src/components/sections/Features": {
     "id": "pages\\index.js -> ../src/components/sections/Features",
     "files": [

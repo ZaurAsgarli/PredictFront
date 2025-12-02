@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
-import { Calendar, Users, TrendingUp, ArrowLeft, Clock } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Clock, DollarSign, HelpCircle, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
-import PredictionForm from '../../src/components/PredictionForm';
-import OddsGlobe from '../../src/components/Three/OddsGlobe';
+import { motion } from 'framer-motion';
 import { eventsService } from '../../src/services/events';
 import { predictionsService } from '../../src/services/predictions';
 import { authService } from '../../src/services/auth';
@@ -24,36 +23,53 @@ export default function EventDetail() {
   const router = useRouter();
   const { id } = router.query;
   const [event, setEvent] = useState(null);
-  const [predictions, setPredictions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [showPredictionForm, setShowPredictionForm] = useState(false);
+  const [tradeType, setTradeType] = useState('buy'); // 'buy' or 'sell'
+  const [selectedOutcome, setSelectedOutcome] = useState('YES'); // 'YES' or 'NO'
+  const [amount, setAmount] = useState('');
+  const [chartTimeframe, setChartTimeframe] = useState('ALL'); // '1H', '6H', '1D', '1W', '1M', 'ALL'
+  const [relatedMarkets, setRelatedMarkets] = useState([]);
   const isAuthenticated = authService.isAuthenticated();
 
   useEffect(() => {
     if (id) {
       loadEventData();
+      loadRelatedMarkets();
     }
   }, [id]);
 
   const loadEventData = async () => {
     try {
-      const [eventData, predictionsData] = await Promise.all([
-        eventsService.getEventById(id),
-        predictionsService.getEventPredictions(id).catch(() => []),
-      ]);
+      setLoading(true);
+      const eventData = await eventsService.getEventById(id);
       setEvent(eventData);
-      setPredictions(predictionsData);
     } catch (error) {
       console.error('Error loading event:', error);
+      // Set event to null to show error state
+      setEvent(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmitPrediction = async (predictionData) => {
+  const loadRelatedMarkets = async () => {
+    try {
+      const markets = await eventsService.getAllEvents({ limit: 5 });
+      setRelatedMarkets(Array.isArray(markets) ? markets.filter(m => m.id !== parseInt(id)) : []);
+    } catch (error) {
+      console.error('Error loading related markets:', error);
+    }
+  };
+
+  const handleTrade = async () => {
     if (!isAuthenticated) {
       router.push('/login');
+      return;
+    }
+
+    if (!amount || parseFloat(amount) <= 0) {
+      alert('Please enter a valid amount');
       return;
     }
 
@@ -61,50 +77,77 @@ export default function EventDetail() {
     try {
       await predictionsService.createPrediction({
         event: id,
-        ...predictionData,
+        outcome_type: selectedOutcome,
+        trade_type: tradeType,
+        amount_staked: parseFloat(amount),
       });
-      alert('Prediction submitted successfully!');
-      setShowPredictionForm(false);
-      loadEventData();
+      alert('Trade executed successfully!');
+      setAmount('');
+      // Reload event data to show updated prices
+      await loadEventData();
     } catch (error) {
-      console.error('Error submitting prediction:', error);
-      alert('Failed to submit prediction. Please try again.');
+      console.error('Error executing trade:', error);
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message ||
+                          error.message || 
+                          'Failed to execute trade. Please try again.';
+      alert(errorMessage);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleOptionSelect = (optionId) => {
-    if (!isAuthenticated) {
-      router.push('/login');
-      return;
-    }
-    
-    const selectedOption = event.options?.find(opt => opt.id === optionId);
-    if (selectedOption) {
-      setShowPredictionForm(true);
-      // You can pre-fill the form with the selected option if needed
+  const quickAddAmount = (value) => {
+    if (value === 'max') {
+      // You can set a max value based on user balance
+      setAmount('1000');
+    } else {
+      setAmount(value.toString());
     }
   };
 
-  // Transform event options to OddsGlobe format
-  const globeOutcomes = useMemo(() => {
-    if (!event?.options) return [];
-    return event.options.map(option => ({
-      id: option.id,
-      name: option.name,
-      odds: option.odds || parseFloat((Math.random() * 2 + 1).toFixed(2)), // Fallback odds if not provided
-    }));
-  }, [event?.options]);
+  // Calculate probability from prices
+  // Event data may have prices directly or in a prices object
+  const getYesPrice = () => {
+    if (event?.yes_price !== undefined) return parseFloat(event.yes_price);
+    if (event?._market?.prices?.yes_price !== undefined) return parseFloat(event._market.prices.yes_price);
+    if (event?._market?.outcome_tokens) {
+      const yesToken = event._market.outcome_tokens.find(t => t.outcome_type === 'YES');
+      return yesToken?.price ? parseFloat(yesToken.price) : 0.5;
+    }
+    return 0.5;
+  };
+  
+  const getNoPrice = () => {
+    if (event?.no_price !== undefined) return parseFloat(event.no_price);
+    if (event?._market?.prices?.no_price !== undefined) return parseFloat(event._market.prices.no_price);
+    if (event?._market?.outcome_tokens) {
+      const noToken = event._market.outcome_tokens.find(t => t.outcome_type === 'NO');
+      return noToken?.price ? parseFloat(noToken.price) : 0.5;
+    }
+    return 0.5;
+  };
+  
+  const yesPriceValue = getYesPrice();
+  const noPriceValue = getNoPrice();
+  const yesProbability = (yesPriceValue * 100).toFixed(0);
+  const noProbability = (noPriceValue * 100).toFixed(0);
+  const yesPrice = yesPriceValue.toFixed(2);
+  const noPrice = noPriceValue.toFixed(2);
+
+  // Calculate price change (mock data for now)
+  const priceChange = useMemo(() => {
+    return Math.random() * 20 - 10; // Random change between -10% and +10%
+  }, [event]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 pt-20">
+      <div className="min-h-screen bg-gray-900 text-white pt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="animate-pulse">
-            <div className="h-64 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-2xl mb-8" />
-            <div className="h-8 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-xl w-3/4 mb-4" />
-            <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-lg w-1/2" />
+            <div className="h-64 bg-gray-800 rounded-2xl mb-8" />
+            <div className="h-8 bg-gray-800 rounded-xl w-3/4 mb-4" />
+            <div className="h-4 bg-gray-800 rounded-lg w-1/2" />
           </div>
         </div>
       </div>
@@ -113,206 +156,313 @@ export default function EventDetail() {
 
   if (!event) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 pt-20">
+      <div className="min-h-screen bg-gray-900 text-white pt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="animate-fade-in">
-            <div className="w-24 h-24 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full mx-auto mb-6 flex items-center justify-center">
-              <span className="text-4xl">📅</span>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Event not found</h2>
-            <p className="text-gray-500 dark:text-gray-400">The event you're looking for doesn't exist or has been removed.</p>
-          </div>
+          <h2 className="text-2xl font-bold mb-2">Event not found</h2>
+          <p className="text-gray-400">The event you're looking for doesn't exist.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 pt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-900 text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
         <button
           onClick={() => router.push('/events')}
-          className="flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-700 mb-8 group animate-slide-up"
+          className="flex items-center text-gray-400 hover:text-white mb-8 group transition-colors"
         >
-          <ArrowLeft className="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
+          <ArrowLeft className="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform" />
           <span className="font-medium">Back to Events</span>
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Event Image */}
-            {event.image && (
-              <div className="relative overflow-hidden rounded-2xl shadow-large animate-slide-up">
-                <img
-                  src={event.image}
-                  alt={event.title}
-                  className="w-full h-64 object-cover transition-transform duration-500 hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-              </div>
-            )}
-
-            {/* Event Details */}
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-soft p-8 border border-white/20 dark:border-gray-700/20 animate-slide-up">
-              <div className="flex items-center justify-between mb-6">
-                <span
-                  className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                    event.status === 'active'
-                      ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 dark:from-green-900/30 dark:to-emerald-900/30 dark:text-green-200'
-                      : event.status === 'closed'
-                      ? 'bg-gradient-to-r from-red-100 to-rose-100 text-red-800 dark:from-red-900/30 dark:to-rose-900/30 dark:text-red-200'
-                      : 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 dark:from-blue-900/30 dark:to-indigo-900/30 dark:text-blue-200'
-                  }`}
-                >
-                  {event.status.toUpperCase()}
-                </span>
-                {event.category && (
-                  <span className="text-sm text-gray-600 dark:text-gray-300 bg-gradient-to-r from-gray-100 to-slate-100 dark:from-gray-700 dark:to-slate-700 px-4 py-2 rounded-full font-medium">
-                    {typeof event.category === 'string' ? event.category : event.category?.name || 'Uncategorized'}
-                  </span>
-                )}
-              </div>
-
-              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-6 gradient-text">
-                {event.title}
+          {/* Main Content - Left Side */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Market Question */}
+            <div className="space-y-4">
+              <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">
+                {event.title}?
               </h1>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div className="flex items-center p-4 bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 rounded-xl border border-primary-100 dark:border-primary-800/30">
-                  <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-blue-500 rounded-xl flex items-center justify-center mr-4">
-                    <Calendar className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">End Date</div>
-                    <div className="font-semibold text-gray-900 dark:text-white">
-                      {safeFormatDate(event.ends_at, 'MMM dd, yyyy HH:mm')}
-                    </div>
-                  </div>
+              
+              {/* Market Stats */}
+              <div className="flex items-center gap-6 text-sm text-gray-400">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="w-4 h-4" />
+                  <span>${event.total_volume || '0'} Vol.</span>
                 </div>
-                <div className="flex items-center p-4 bg-gradient-to-r from-secondary-50 to-purple-50 dark:from-secondary-900/20 dark:to-purple-900/20 rounded-xl border border-secondary-100 dark:border-secondary-800/30">
-                  <div className="w-12 h-12 bg-gradient-to-r from-secondary-500 to-purple-500 rounded-xl flex items-center justify-center mr-4">
-                    <Users className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">Participants</div>
-                    <div className="font-semibold text-gray-900 dark:text-white">{event.participants_count || 0}</div>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  <span>{safeFormatDate(event.ends_at)}</span>
                 </div>
               </div>
 
-              <div className="prose dark:prose-invert max-w-none">
-                <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Description</h3>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {event.description}
-                </p>
+              {/* Date Selection Buttons */}
+              <div className="flex gap-2">
+                <button className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm font-medium transition-colors">
+                  {safeFormatDate(event.ends_at, 'MMM dd')}
+                </button>
+                <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors">
+                  {safeFormatDate(event.ends_at)}
+                </button>
               </div>
             </div>
 
-            {/* 3D Odds Visualization */}
-            {event.options && event.options.length > 0 && (
-              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-soft p-8 border border-white/20 dark:border-gray-700/20 animate-slide-up overflow-hidden">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 gradient-text">
-                  3D Odds Visualization
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  Explore prediction options in 3D. Click on any option to make a prediction.
-                </p>
-                <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-slate-900/50 dark:to-purple-900/50">
-                  <OddsGlobe
-                    outcomes={globeOutcomes}
-                    size={2.5}
-                    autoRotate={true}
-                    onSelect={handleOptionSelect}
-                    className="w-full"
+            {/* Current Probability */}
+            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-sm text-gray-400">Current Chance</span>
+                <div className="flex items-center gap-2">
+                  {priceChange > 0 ? (
+                    <TrendingUp className="w-4 h-4 text-green-400" />
+                  ) : (
+                    <TrendingDown className="w-4 h-4 text-red-400" />
+                  )}
+                  <span className={`text-sm font-semibold ${priceChange > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {Math.abs(priceChange).toFixed(0)}%
+                  </span>
+                </div>
+              </div>
+              <div className="text-5xl font-bold text-blue-400">
+                {yesProbability}%
+              </div>
+            </div>
+
+            {/* Price Chart Placeholder */}
+            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+              <div className="h-64 bg-gray-900 rounded-lg flex items-center justify-center mb-4">
+                <div className="text-center">
+                  <TrendingUp className="w-12 h-12 text-gray-600 mx-auto mb-2" />
+                  <p className="text-gray-500 text-sm">Price Chart</p>
+                  <p className="text-gray-600 text-xs mt-1">Chart visualization coming soon</p>
+                </div>
+              </div>
+              
+              {/* Timeframe Buttons */}
+              <div className="flex gap-2">
+                {['1H', '6H', '1D', '1W', '1M', 'ALL'].map((timeframe) => (
+                  <button
+                    key={timeframe}
+                    onClick={() => setChartTimeframe(timeframe)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      chartTimeframe === timeframe
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    {timeframe}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Order Book */}
+            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Order Book</h3>
+                <HelpCircle className="w-5 h-5 text-gray-400 cursor-help" />
+              </div>
+              <div className="text-sm text-gray-400">
+                Order book data will be displayed here
+              </div>
+            </div>
+
+            {/* Market Context */}
+            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Market Context</h3>
+                <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors">
+                  Generate
+                </button>
+              </div>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                {event.description || 'No additional context available for this market.'}
+              </p>
+            </div>
+
+            {/* Rules */}
+            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+              <h3 className="text-lg font-semibold mb-4">Rules</h3>
+              <a
+                href={`/events/${event.id}`}
+                className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-2"
+              >
+                View full market rules
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+
+          {/* Trading Panel - Right Side */}
+          <div className="lg:col-span-1">
+            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 sticky top-8">
+              {/* Buy/Sell Tabs */}
+              <div className="flex gap-2 mb-6">
+                <button
+                  onClick={() => setTradeType('buy')}
+                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                    tradeType === 'buy'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  Buy
+                </button>
+                <button
+                  onClick={() => setTradeType('sell')}
+                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                    tradeType === 'sell'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  Sell
+                </button>
+              </div>
+
+              {/* Market Dropdown */}
+              <div className="mb-6">
+                <select className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                  <option>Market</option>
+                </select>
+              </div>
+
+              {/* YES/NO Buttons */}
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <button
+                  onClick={() => setSelectedOutcome('YES')}
+                  className={`p-6 rounded-xl font-bold text-lg transition-all ${
+                    selectedOutcome === 'YES'
+                      ? 'bg-green-600 text-white shadow-lg scale-105'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  <div className="text-2xl mb-1">Yes</div>
+                  <div className="text-sm opacity-80">{yesPrice}¢</div>
+                </button>
+                <button
+                  onClick={() => setSelectedOutcome('NO')}
+                  className={`p-6 rounded-xl font-bold text-lg transition-all ${
+                    selectedOutcome === 'NO'
+                      ? 'bg-gray-600 text-white shadow-lg scale-105'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  <div className="text-2xl mb-1">No</div>
+                  <div className="text-sm opacity-80">{noPrice}¢</div>
+                </button>
+              </div>
+
+              {/* Amount Input */}
+              <div className="mb-4">
+                <label className="block text-sm text-gray-400 mb-2">Amount</label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="0"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
-            )}
 
-            {/* Prediction Statistics */}
-            {predictions.length > 0 && (
-              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-soft p-8 border border-white/20 dark:border-gray-700/20 animate-slide-up">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 gradient-text">
-                  Prediction Distribution
-                </h2>
-                <div className="space-y-6">
-                  {event.options?.map((option, index) => {
-                    const optionPredictions = predictions.filter(
-                      (p) => p.outcome === option.id
-                    );
-                    const percentage =
-                      predictions.length > 0
-                        ? (optionPredictions.length / predictions.length) * 100
-                        : 0;
-
-                    return (
-                      <div key={option.id} className="animate-slide-up" style={{ animationDelay: `${index * 0.1}s` }}>
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="font-semibold text-gray-900 dark:text-white text-lg">
-                            {option.name}
-                          </span>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-                              {optionPredictions.length} votes
-                            </span>
-                            <span className="text-lg font-bold text-primary-600 dark:text-primary-400">
-                              {percentage.toFixed(1)}%
-                            </span>
-                          </div>
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
-                          <div
-                            className="bg-gradient-to-r from-primary-500 to-secondary-500 h-3 rounded-full transition-all duration-1000 ease-out"
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            {event.status === 'active' && isAuthenticated ? (
-              showPredictionForm ? (
-                <PredictionForm
-                  event={event}
-                  onSubmit={handleSubmitPrediction}
-                  loading={submitting}
-                />
-              ) : (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                  <button
-                    onClick={() => setShowPredictionForm(true)}
-                    className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors"
-                  >
-                    Make a Prediction
-                  </button>
-                </div>
-              )
-            ) : event.status === 'active' && !isAuthenticated ? (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Log in to make predictions
-                </p>
+              {/* Quick Add Buttons */}
+              <div className="grid grid-cols-4 gap-2 mb-6">
                 <button
-                  onClick={() => router.push('/login')}
-                  className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+                  onClick={() => quickAddAmount(1)}
+                  className="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors"
                 >
-                  Login to Predict
+                  +$1
+                </button>
+                <button
+                  onClick={() => quickAddAmount(20)}
+                  className="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors"
+                >
+                  +$20
+                </button>
+                <button
+                  onClick={() => quickAddAmount(100)}
+                  className="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors"
+                >
+                  +$100
+                </button>
+                <button
+                  onClick={() => quickAddAmount('max')}
+                  className="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Max
                 </button>
               </div>
-            ) : (
-              <div className="bg-gray-100 dark:bg-gray-700 rounded-lg shadow-md p-6">
-                <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-center text-gray-600 dark:text-gray-400">
-                  This event is {event.status}
-                </p>
+
+              {/* Trade Button */}
+              <button
+                onClick={handleTrade}
+                disabled={submitting || !amount}
+                className={`w-full py-4 rounded-lg font-semibold text-lg transition-all ${
+                  submitting || !amount
+                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+                }`}
+              >
+                {submitting ? 'Processing...' : 'Trade'}
+              </button>
+
+              {/* Terms */}
+              <p className="text-xs text-gray-500 text-center mt-4">
+                By trading, you agree to the Terms of Use.
+              </p>
+            </div>
+
+            {/* Related Markets */}
+            {relatedMarkets.length > 0 && (
+              <div className="mt-6 bg-gray-800 rounded-xl p-6 border border-gray-700">
+                <h3 className="text-lg font-semibold mb-4">Related Markets</h3>
+                
+                {/* Category Filters */}
+                <div className="flex gap-2 mb-4 flex-wrap">
+                  {['All', 'Politics', 'Geopolitics', event.category].filter(Boolean).map((cat) => (
+                    <button
+                      key={cat}
+                      className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                        cat === event.category
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      {typeof cat === 'string' ? cat : cat?.name || 'Uncategorized'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Related Markets List */}
+                <div className="space-y-3">
+                  {relatedMarkets.slice(0, 3).map((market) => (
+                    <button
+                      key={market.id}
+                      onClick={() => router.push(`/events/${market.id}`)}
+                      className="w-full flex items-center gap-3 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-left"
+                    >
+                      {market.image && (
+                        <img
+                          src={market.image}
+                          alt={market.title}
+                          className="w-12 h-12 rounded-lg object-cover"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">
+                          {market.title}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {market.yes_price ? (parseFloat(market.yes_price) * 100).toFixed(0) : '50'}%
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -321,4 +471,3 @@ export default function EventDetail() {
     </div>
   );
 }
-

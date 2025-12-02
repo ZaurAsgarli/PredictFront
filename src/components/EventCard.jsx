@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Calendar, Users, TrendingUp, Clock, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
+import { motion } from 'framer-motion';
 
 // Helper function to safely format dates
 const safeFormatDate = (dateValue, formatStr = 'MMM dd, yyyy') => {
@@ -18,120 +19,152 @@ export default function EventCard({ event }) {
   const getStatusColor = (status) => {
     switch (status) {
       case 'active':
-        return 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 dark:from-green-900/30 dark:to-emerald-900/30 dark:text-green-200';
+        return 'from-green-500 to-emerald-500';
       case 'closed':
-        return 'bg-gradient-to-r from-red-100 to-rose-100 text-red-800 dark:from-red-900/30 dark:to-rose-900/30 dark:text-red-200';
+        return 'from-red-500 to-rose-500';
       case 'resolved':
-        return 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 dark:from-blue-900/30 dark:to-indigo-900/30 dark:text-blue-200';
+        return 'from-blue-500 to-indigo-500';
       default:
-        return 'bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 dark:from-gray-700 dark:to-slate-700 dark:text-gray-200';
+        return 'from-gray-500 to-slate-500';
     }
   };
 
   return (
-    <Link href={`/events/${event.id}`}>
-      <div className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-soft hover:shadow-large transition-all duration-300 overflow-hidden border border-white/20 dark:border-gray-700/20 card-hover">
-        {event.image && (
-          <div className="relative overflow-hidden">
+    <motion.div
+      whileHover={{ y: -8, scale: 1.02 }}
+      transition={{ duration: 0.3 }}
+      className="group relative"
+    >
+      <Link href={`/events/${event.id}`}>
+        <div className="relative h-full bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-2xl transition-all duration-300">
+        {/* Image Section */}
+        <div className="relative h-56 overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600">
+          {event.image ? (
             <img
               src={event.image}
               alt={event.title}
-              className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-            <div className="absolute top-4 left-4">
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                  event.status
-                )}`}
-              >
-                {event.status.toUpperCase()}
-              </span>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <TrendingUp className="w-16 h-16 text-white/50" />
             </div>
-            {event.category && (
-              <div className="absolute top-4 right-4">
-                <span className="text-xs text-white bg-black/20 backdrop-blur-sm px-3 py-1 rounded-full font-medium">
-                  {typeof event.category === 'string' ? event.category : event.category?.name || 'Uncategorized'}
-                </span>
-              </div>
-            )}
+          )}
+          
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          
+          {/* Status Badge */}
+          <div className="absolute top-4 left-4">
+            <span
+              className={`px-3 py-1.5 rounded-full text-xs font-bold text-white bg-gradient-to-r ${getStatusColor(
+                event.status
+              )} shadow-lg backdrop-blur-sm`}
+            >
+              {event.status?.toUpperCase() || 'ACTIVE'}
+            </span>
           </div>
-        )}
-        
-        {!event.image && (
-          <div className="relative bg-gradient-to-br from-primary-500 to-secondary-500 h-48 flex items-center justify-center">
-            <div className="text-center text-white">
-              <TrendingUp className="h-12 w-12 mx-auto mb-2 opacity-80" />
-              <span className="text-sm font-medium opacity-80">Prediction Event</span>
-            </div>
-            <div className="absolute top-4 left-4">
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                  event.status
-                )}`}
-              >
-                {event.status.toUpperCase()}
-              </span>
-            </div>
-            {event.category && (
-              <div className="absolute top-4 right-4">
-                <span className="text-xs text-white bg-black/20 backdrop-blur-sm px-3 py-1 rounded-full font-medium">
-                  {typeof event.category === 'string' ? event.category : event.category?.name || 'Uncategorized'}
-                </span>
-              </div>
-            )}
-          </div>
-        )}
 
+          {/* Category Badge */}
+          {event.category && (
+            <div className="absolute top-4 right-4">
+              <span className="px-3 py-1.5 rounded-full text-xs font-medium text-white bg-white/20 backdrop-blur-md border border-white/30">
+                {typeof event.category === 'string' ? event.category : event.category?.name || 'Uncategorized'}
+              </span>
+            </div>
+          )}
+
+          {/* Hover Glow Effect */}
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-purple-500/0"
+            whileHover={{ background: 'linear-gradient(to br, rgba(59, 130, 246, 0.2), rgba(147, 51, 234, 0.2))' }}
+            transition={{ duration: 0.3 }}
+          />
+        </div>
+
+        {/* Content Section */}
         <div className="p-6">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 line-clamp-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200">
+          {/* Title */}
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
             {event.title}
           </h3>
+
+          {/* Description */}
           <p className="text-gray-600 dark:text-gray-300 text-sm mb-6 line-clamp-2 leading-relaxed">
-            {event.description}
+            {event.description || 'Join this prediction market and make your forecast.'}
           </p>
 
-          <div className="space-y-3 mb-6">
-            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-              <div className="w-8 h-8 bg-gradient-to-r from-primary-100 to-blue-100 dark:from-primary-900/30 dark:to-blue-900/30 rounded-lg flex items-center justify-center mr-3">
-                <Calendar className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               </div>
-              <span className="font-medium">
-                Ends: {safeFormatDate(event.ends_at)}
-              </span>
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Ends</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {safeFormatDate(event.ends_at)}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-              <div className="w-8 h-8 bg-gradient-to-r from-secondary-100 to-purple-100 dark:from-secondary-900/30 dark:to-purple-900/30 rounded-lg flex items-center justify-center mr-3">
-                <Users className="h-4 w-4 text-secondary-600 dark:text-secondary-400" />
+
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center">
+                <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
               </div>
-              <span className="font-medium">{event.participants_count || 0} Participants</span>
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Participants</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {event.participants_count || 0}
+                </p>
+              </div>
             </div>
-            {event.total_predictions && (
-              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                <div className="w-8 h-8 bg-gradient-to-r from-accent-100 to-pink-100 dark:from-accent-900/30 dark:to-pink-900/30 rounded-lg flex items-center justify-center mr-3">
-                  <TrendingUp className="h-4 w-4 text-accent-600 dark:text-accent-400" />
-                </div>
-                <span className="font-medium">{event.total_predictions} Predictions</span>
-              </div>
-            )}
           </div>
 
-          {event.status === 'active' && (
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center text-sm text-primary-600 dark:text-primary-400">
-                  <div className="w-8 h-8 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 rounded-lg flex items-center justify-center mr-3">
-                    <Clock className="h-4 w-4 text-green-600 dark:text-green-400" />
-                  </div>
-                  <span className="font-semibold">Active Now</span>
-                </div>
-                <ArrowRight className="h-5 w-5 text-primary-600 dark:text-primary-400 group-hover:translate-x-1 transition-transform duration-200" />
+          {/* Price Info (if available) */}
+          {(event.yes_price || event.no_price) && (
+            <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 mb-4">
+              <div className="text-center flex-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">YES</p>
+                <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                  ${event.yes_price ? parseFloat(event.yes_price).toFixed(2) : '0.00'}
+                </p>
+              </div>
+              <div className="w-px h-8 bg-gray-300 dark:bg-gray-600" />
+              <div className="text-center flex-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">NO</p>
+                <p className="text-lg font-bold text-red-600 dark:text-red-400">
+                  ${event.no_price ? parseFloat(event.no_price).toFixed(2) : '0.00'}
+                </p>
               </div>
             </div>
           )}
+
+          {/* CTA */}
+          <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+            <span className="text-sm font-medium text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
+              View Details
+            </span>
+            <motion.div
+              whileHover={{ x: 4 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ArrowRight className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </motion.div>
+          </div>
         </div>
+
+        {/* Shine Effect on Hover */}
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100"
+          initial={{ x: '-100%' }}
+          whileHover={{ x: '200%' }}
+          transition={{ duration: 0.6 }}
+        />
       </div>
     </Link>
+    </motion.div>
   );
 }
 

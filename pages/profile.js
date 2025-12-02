@@ -26,11 +26,33 @@ export default function Profile() {
   const loadProfileData = async (userId) => {
     try {
       const [statsData, rankData] = await Promise.all([
-        predictionsService.getPredictionStats(userId).catch(() => null),
-        leaderboardService.getUserRank(userId).catch(() => null),
+        predictionsService.getPredictionStats(userId).catch(() => ({
+          total: 0,
+          win_rate: 0,
+          total_points: 0,
+          current_streak: 0,
+          achievements: 0,
+        })),
+        leaderboardService.getUserRank(userId).catch(() => ({
+          rank: 0,
+          total_points: 0,
+          win_rate: 0,
+          total_predictions: 0,
+          current_streak: 0,
+        })),
       ]);
       setStats(statsData);
       setRank(rankData);
+      
+      // Also refresh user data from API
+      try {
+        const currentUser = await authService.getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+        }
+      } catch (error) {
+        console.error('Error refreshing user data:', error);
+      }
     } catch (error) {
       console.error('Error loading profile data:', error);
     } finally {
@@ -88,7 +110,7 @@ export default function Profile() {
               </div>
               <div className="flex items-center text-gray-600 dark:text-gray-400">
                 <Calendar className="h-5 w-5 mr-2" />
-                Joined {user?.joined_date ? format(new Date(user.joined_date), 'MMM yyyy') : 'N/A'}
+                Joined {user?.created_at || user?.date_joined ? format(new Date(user.created_at || user.date_joined), 'MMM yyyy') : 'N/A'}
               </div>
               <div className="flex items-center text-gray-600 dark:text-gray-400">
                 <Trophy className="h-5 w-5 mr-2" />

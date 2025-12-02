@@ -23,14 +23,29 @@ export default function Predictions() {
 
   const loadPredictions = async () => {
     try {
+      setLoading(true);
       const [predictionsData, statsData] = await Promise.all([
-        predictionsService.getUserPredictions(user.id),
-        predictionsService.getPredictionStats(user.id).catch(() => null),
+        predictionsService.getUserPredictions(user.id).catch((err) => {
+          console.error('Error loading predictions:', err);
+          return [];
+        }),
+        predictionsService.getPredictionStats(user.id).catch((err) => {
+          console.error('Error loading stats:', err);
+          return {
+            total: 0,
+            win_rate: 0,
+            total_points: 0,
+            current_streak: 0,
+            achievements: 0,
+          };
+        }),
       ]);
-      setPredictions(predictionsData);
+      setPredictions(Array.isArray(predictionsData) ? predictionsData : []);
       setStats(statsData);
     } catch (error) {
       console.error('Error loading predictions:', error);
+      setPredictions([]);
+      setStats(null);
     } finally {
       setLoading(false);
     }
