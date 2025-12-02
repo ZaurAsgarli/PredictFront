@@ -5,118 +5,102 @@ import {
   TrendingUp,
   Users,
   ShoppingCart,
-  AlertCircle,
+  AlertTriangle,
   BarChart3,
-  LogOut,
   Menu,
   X,
+  LogOut,
+  Settings,
 } from 'lucide-react';
-import { useState } from 'react';
-import { adminApi } from '../services/adminApi';
+import { authService } from '../../services/auth';
 
 const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
-  { icon: TrendingUp, label: 'Markets', path: '/admin/markets' },
-  { icon: Users, label: 'Users', path: '/admin/users' },
-  { icon: ShoppingCart, label: 'Trades', path: '/admin/trades' },
-  { icon: AlertCircle, label: 'Disputes', path: '/admin/disputes' },
-  { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
+  { icon: LayoutDashboard, label: 'Dashboard', href: '/admin/dashboard' },
+  { icon: TrendingUp, label: 'Markets', href: '/admin/markets' },
+  { icon: Users, label: 'Users', href: '/admin/users' },
+  { icon: ShoppingCart, label: 'Trades', href: '/admin/trades' },
+  { icon: AlertTriangle, label: 'Disputes', href: '/admin/disputes' },
+  { icon: BarChart3, label: 'Analytics', href: '/admin/analytics' },
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ isOpen, setIsOpen }) {
   const router = useRouter();
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const handleLogout = () => {
-    adminApi.logout();
+    authService.logout();
     router.push('/admin/login');
-  };
-
-  const isActive = (path) => {
-    if (path === '/admin/dashboard') {
-      return router.pathname === path;
-    }
-    return router.pathname.startsWith(path);
   };
 
   return (
     <>
-      {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
-        <button
-          onClick={() => setIsMobileOpen(!isMobileOpen)}
-          className="p-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg"
-        >
-          {isMobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
-      </div>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
 
       {/* Sidebar */}
       <aside
-        className={`
-          fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
-          transform transition-transform duration-300 ease-in-out z-40
-          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0
-        `}
+        className={`fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-50 transition-all duration-300 ${
+          isOpen ? 'w-64' : 'w-16'
+        }`}
       >
         <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-            <h1 className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-              Admin Panel
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Prediction Market</p>
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            {isOpen && (
+              <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
+            )}
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              {isOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  onClick={() => setIsMobileOpen(false)}
-                  className={`
-                    flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
-                    ${
-                      active
-                        ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-semibold'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                    }
-                  `}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+          <nav className="flex-1 overflow-y-auto p-4">
+            <ul className="space-y-2">
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = router.pathname === item.href || 
+                  (item.href !== '/admin/dashboard' && router.pathname.startsWith(item.href));
+                
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                        isActive
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Icon size={20} />
+                      {isOpen && <span>{item.label}</span>}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           </nav>
 
-          {/* Logout */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+          {/* Footer */}
+          <div className="p-4 border-t border-gray-200">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
             >
-              <LogOut className="h-5 w-5" />
-              <span>Logout</span>
+              <LogOut size={20} />
+              {isOpen && <span>Logout</span>}
             </button>
           </div>
         </div>
       </aside>
-
-      {/* Overlay for mobile */}
-      {isMobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-          onClick={() => setIsMobileOpen(false)}
-        />
-      )}
     </>
   );
 }
-
 

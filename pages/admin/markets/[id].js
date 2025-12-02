@@ -1,20 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
-import AdminLayout from '../../../src/admin/layouts/AdminLayout';
+import { ArrowLeft, CheckCircle, TrendingUp, Users, Clock, DollarSign } from 'lucide-react';
+import AdminAuthGuard from '../../../src/admin/components/AdminAuthGuard';
 import AdminTable from '../../../src/admin/components/AdminTable';
+import Link from 'next/link';
 import { adminApi } from '../../../src/admin/services/adminApi';
-import { ArrowLeft, CheckCircle, TrendingUp, Users, DollarSign } from 'lucide-react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
+import { format } from 'date-fns';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function MarketDetail() {
   const router = useRouter();
@@ -22,9 +14,10 @@ export default function MarketDetail() {
   const [market, setMarket] = useState(null);
   const [trades, setTrades] = useState([]);
   const [positions, setPositions] = useState([]);
-  const [activeTab, setActiveTab] = useState('details');
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('details');
   const [resolving, setResolving] = useState(false);
+  const [priceHistory, setPriceHistory] = useState([]);
 
   useEffect(() => {
     if (id) {
@@ -36,7 +29,7 @@ export default function MarketDetail() {
     try {
       setLoading(true);
       const [marketData, tradesData, positionsData] = await Promise.all([
-        adminApi.getMarketById(id).catch(() => null),
+        adminApi.getMarket(id).catch(() => null),
         adminApi.getMarketTrades(id).catch(() => ({ results: [] })),
         adminApi.getMarketPositions(id).catch(() => ({ results: [] })),
       ]);
@@ -44,11 +37,29 @@ export default function MarketDetail() {
       setMarket(marketData);
       setTrades(tradesData.results || tradesData || []);
       setPositions(positionsData.results || positionsData || []);
+
+      // Mock price history data (replace with actual API call when available)
+      setPriceHistory(generateMockPriceHistory());
     } catch (error) {
       console.error('Error loading market data:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateMockPriceHistory = () => {
+    const data = [];
+    const now = new Date();
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      data.push({
+        date: format(date, 'MMM dd'),
+        yes: 0.4 + Math.random() * 0.2,
+        no: 0.4 + Math.random() * 0.2,
+      });
+    }
+    return data;
   };
 
   const handleResolve = async () => {
@@ -68,120 +79,127 @@ export default function MarketDetail() {
       alert('Market resolved successfully!');
       loadMarketData();
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to resolve market');
+      alert(error.response?.data?.message || 'Error resolving market');
     } finally {
       setResolving(false);
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleString('en-US');
-  };
-
-  const priceHistoryData = [
-    { time: 'Day 1', yes: 0.45, no: 0.55 },
-    { time: 'Day 2', yes: 0.52, no: 0.48 },
-    { time: 'Day 3', yes: 0.48, no: 0.52 },
-    { time: 'Day 4', yes: 0.55, no: 0.45 },
-    { time: 'Day 5', yes: 0.58, no: 0.42 },
-    { time: 'Day 6', yes: 0.62, no: 0.38 },
-    { time: 'Day 7', yes: 0.65, no: 0.35 },
+  const tabs = [
+    { id: 'details', label: 'Details' },
+    { id: 'trades', label: 'Trades' },
+    { id: 'positions', label: 'Positions' },
+    { id: 'price-history', label: 'Price History' },
+    { id: 'resolve', label: 'Resolve Market' },
   ];
 
-  const tradesColumns = [
-    { header: 'User', accessor: 'user', render: (row) => row.user?.username || row.user_id || 'N/A' },
-    { header: 'Type', accessor: 'type', render: (row) => <span className="uppercase">{row.type || 'N/A'}</span> },
-    { header: 'Outcome', accessor: 'outcome', render: (row) => <span className="uppercase">{row.outcome || 'N/A'}</span> },
-    { header: 'Amount', accessor: 'amount', render: (row) => `$${(row.amount || 0).toFixed(2)}` },
-    { header: 'Tokens', accessor: 'tokens', render: (row) => (row.tokens || 0).toFixed(2) },
-    { header: 'Price', accessor: 'price', render: (row) => `$${(row.price || row.execution_price || 0).toFixed(2)}` },
-    { header: 'Date', accessor: 'created_at', render: (row) => formatDate(row.created_at || row.timestamp) },
-  ];
-
-  const positionsColumns = [
-    { header: 'User', accessor: 'user', render: (row) => row.user?.username || row.user_id || 'N/A' },
-    { header: 'Outcome', accessor: 'outcome', render: (row) => <span className="uppercase">{row.outcome || 'N/A'}</span> },
-    { header: 'Shares', accessor: 'shares', render: (row) => (row.shares || row.quantity || 0).toFixed(2) },
-    { header: 'Value', accessor: 'value', render: (row) => `$${(row.value || 0).toFixed(2)}` },
-  ];
-
-  if (loading) {
+  if (loading && !market) {
     return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-64">
+      <AdminAuthGuard>
+        <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading market data...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading market data...</p>
           </div>
         </div>
-      </AdminLayout>
+      </AdminAuthGuard>
     );
   }
 
   if (!market) {
     return (
-      <AdminLayout>
+      <AdminAuthGuard>
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Market Not Found</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">The market you're looking for doesn't exist.</p>
-          <Link href="/admin/markets" className="text-primary-600 dark:text-primary-400 hover:underline">
-            Back to Markets
+          <p className="text-gray-600">Market not found</p>
+          <Link href="/admin/markets" className="text-blue-600 hover:underline mt-4 inline-block">
+            ← Back to markets
           </Link>
         </div>
-      </AdminLayout>
+      </AdminAuthGuard>
     );
   }
 
   return (
-    <AdminLayout>
+    <AdminAuthGuard>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center gap-4">
           <Link
             href="/admin/markets"
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft size={20} />
           </Link>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{market.title}</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">Market ID: {market.id}</p>
+            <h1 className="text-3xl font-bold text-gray-900">{market.title}</h1>
+            <p className="text-gray-600 mt-1">Market ID: {market.id}</p>
           </div>
-          {market.status?.toLowerCase() === 'active' && (
-            <button
-              onClick={handleResolve}
-              disabled={resolving}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
-            >
-              <CheckCircle className="h-5 w-5" />
-              {resolving ? 'Resolving...' : 'Resolve Market'}
-            </button>
-          )}
+        </div>
+
+        {/* Market Info Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <TrendingUp className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">YES Price</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  ${market.yes_price ? parseFloat(market.yes_price).toFixed(2) : 'N/A'}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-50 rounded-lg">
+                <TrendingUp className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">NO Price</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  ${market.no_price ? parseFloat(market.no_price).toFixed(2) : 'N/A'}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-50 rounded-lg">
+                <Clock className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Status</p>
+                <p className="text-lg font-semibold text-gray-900 capitalize">{market.status}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-50 rounded-lg">
+                <Users className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Trades</p>
+                <p className="text-lg font-semibold text-gray-900">{trades.length}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="border-b border-gray-200 dark:border-gray-700">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="border-b border-gray-200">
             <nav className="flex -mb-px">
-              {[
-                { id: 'details', label: 'Details' },
-                { id: 'trades', label: 'Trades' },
-                { id: 'positions', label: 'Positions' },
-                { id: 'price', label: 'Price History' },
-                { id: 'resolve', label: 'Resolve' },
-              ].map((tab) => (
+              {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`
-                    px-6 py-4 text-sm font-medium border-b-2 transition-colors
-                    ${
-                      activeTab === tab.id
-                        ? 'border-primary-600 text-primary-600 dark:text-primary-400'
-                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
-                    }
-                  `}
+                  className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
                 >
                   {tab.label}
                 </button>
@@ -192,58 +210,32 @@ export default function MarketDetail() {
           <div className="p-6">
             {/* Details Tab */}
             {activeTab === 'details' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Category</h3>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{market.category || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Status</h3>
-                    <span
-                      className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                        market.status?.toLowerCase() === 'active'
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                          : 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
-                      }`}
-                    >
-                      {market.status || 'Unknown'}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Ends At</h3>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {formatDate(market.ends_at)}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Created At</h3>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {formatDate(market.created_at)}
-                    </p>
-                  </div>
-                </div>
+              <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Description</h3>
-                  <p className="text-gray-900 dark:text-white">{market.description || 'No description provided.'}</p>
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Description</h3>
+                  <p className="text-gray-900">{market.description || 'No description'}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
-                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">YES Price</h3>
-                    </div>
-                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      ${(market.yes_price || market.yesPrice || 0).toFixed(2)}
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 mb-1">Category</h3>
+                    <p className="text-gray-900">{market.category || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 mb-1">Ends At</h3>
+                    <p className="text-gray-900">
+                      {market.ends_at ? format(new Date(market.ends_at), 'PPpp') : 'N/A'}
                     </p>
                   </div>
-                  <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <TrendingUp className="h-5 w-5 text-red-600 dark:text-red-400 rotate-180" />
-                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">NO Price</h3>
-                    </div>
-                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                      ${(market.no_price || market.noPrice || 0).toFixed(2)}
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 mb-1">Created At</h3>
+                    <p className="text-gray-900">
+                      {market.created_at ? format(new Date(market.created_at), 'PPpp') : 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 mb-1">Starting Liquidity</h3>
+                    <p className="text-gray-900">
+                      {market.starting_liquidity ? `$${market.starting_liquidity}` : 'N/A'}
                     </p>
                   </div>
                 </div>
@@ -253,34 +245,83 @@ export default function MarketDetail() {
             {/* Trades Tab */}
             {activeTab === 'trades' && (
               <AdminTable
-                columns={tradesColumns}
+                headers={['User', 'Outcome', 'Type', 'Amount', 'Tokens', 'Price', 'Timestamp']}
                 data={trades}
-                loading={false}
-                emptyMessage="No trades found for this market"
+                loading={loading}
+                renderRow={(trade) => (
+                  <>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {trade.user?.username || trade.user_id || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        trade.outcome === 'YES' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {trade.outcome}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
+                      {trade.type || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ${trade.amount_staked ? parseFloat(trade.amount_staked).toFixed(2) : 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {trade.tokens_received || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ${trade.execution_price ? parseFloat(trade.execution_price).toFixed(2) : 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {trade.timestamp ? format(new Date(trade.timestamp), 'MMM dd, yyyy HH:mm') : 'N/A'}
+                    </td>
+                  </>
+                )}
+                emptyMessage="No trades found"
               />
             )}
 
             {/* Positions Tab */}
             {activeTab === 'positions' && (
               <AdminTable
-                columns={positionsColumns}
+                headers={['User', 'Outcome', 'Tokens', 'Value']}
                 data={positions}
-                loading={false}
-                emptyMessage="No positions found for this market"
+                loading={loading}
+                renderRow={(position) => (
+                  <>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {position.user?.username || position.user_id || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        position.outcome === 'YES' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {position.outcome}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {position.tokens || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ${position.value ? parseFloat(position.value).toFixed(2) : 'N/A'}
+                    </td>
+                  </>
+                )}
+                emptyMessage="No positions found"
               />
             )}
 
             {/* Price History Tab */}
-            {activeTab === 'price' && (
+            {activeTab === 'price-history' && (
               <div className="h-96">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={priceHistoryData}>
+                  <LineChart data={priceHistory}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="time" />
+                    <XAxis dataKey="date" />
                     <YAxis domain={[0, 1]} />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="yes" stroke="#22c55e" name="YES Price" />
+                    <Line type="monotone" dataKey="yes" stroke="#10b981" name="YES Price" />
                     <Line type="monotone" dataKey="no" stroke="#ef4444" name="NO Price" />
                   </LineChart>
                 </ResponsiveContainer>
@@ -289,28 +330,45 @@ export default function MarketDetail() {
 
             {/* Resolve Tab */}
             {activeTab === 'resolve' && (
-              <div className="space-y-4">
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                  <h3 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-2">Resolve Market</h3>
-                  <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                    Once resolved, the market will be closed and all positions will be settled. This action cannot be
-                    undone.
+              <div className="max-w-md mx-auto text-center space-y-6">
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <CheckCircle className="h-12 w-12 text-yellow-600 mx-auto mb-2" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Resolve Market</h3>
+                  <p className="text-sm text-gray-600">
+                    Once resolved, this market will be closed and no more trades will be allowed.
                   </p>
                 </div>
-                <button
-                  onClick={handleResolve}
-                  disabled={resolving || market.status?.toLowerCase() !== 'active'}
-                  className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-                >
-                  {resolving ? 'Resolving...' : 'Resolve Market'}
-                </button>
+                <div className="space-y-4">
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Current Status:</p>
+                    <span className={`px-3 py-1 text-sm font-medium rounded-full ${
+                      market.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {market.status}
+                    </span>
+                  </div>
+                  {market.status === 'active' && (
+                    <button
+                      onClick={handleResolve}
+                      disabled={resolving}
+                      className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle size={20} />
+                      {resolving ? 'Resolving...' : 'Resolve Market'}
+                    </button>
+                  )}
+                  {market.status !== 'active' && (
+                    <p className="text-sm text-gray-500">
+                      This market has already been resolved or closed.
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </AdminAuthGuard>
   );
 }
-
 

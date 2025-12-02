@@ -1,27 +1,35 @@
 import { useState, useEffect } from 'react';
-import AdminLayout from '../../src/admin/layouts/AdminLayout';
+import { Search, Filter, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import AdminAuthGuard from '../../src/admin/components/AdminAuthGuard';
 import AdminTable from '../../src/admin/components/AdminTable';
 import { adminApi } from '../../src/admin/services/adminApi';
-import { Search, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { format } from 'date-fns';
 
-export default function AdminDisputes() {
+export default function DisputesManagement() {
   const [disputes, setDisputes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [processing, setProcessing] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [resolving, setResolving] = useState(null);
 
   useEffect(() => {
     loadDisputes();
-  }, []);
+  }, [statusFilter]);
 
   const loadDisputes = async () => {
     try {
       setLoading(true);
       const data = await adminApi.getDisputes();
-      const disputesList = data.results || data || [];
+      let disputesList = data.results || data || [];
+      
+      if (statusFilter !== 'all') {
+        disputesList = disputesList.filter(d => d.status === statusFilter);
+      }
+      
       setDisputes(disputesList);
     } catch (error) {
       console.error('Error loading disputes:', error);
+      setDisputes([]);
     } finally {
       setLoading(false);
     }
@@ -31,202 +39,133 @@ export default function AdminDisputes() {
     if (!confirm(`Are you sure you want to ${action} this dispute?`)) return;
 
     try {
-      setProcessing(disputeId);
+      setResolving(disputeId);
       await adminApi.resolveDispute(disputeId, action);
-      alert(`Dispute ${action}ed successfully!`);
+      alert(`Dispute ${action}d successfully!`);
       loadDisputes();
     } catch (error) {
-      alert(error.response?.data?.message || `Failed to ${action} dispute`);
+      alert(error.response?.data?.message || `Error ${action}ing dispute`);
     } finally {
-      setProcessing(null);
+      setResolving(null);
     }
   };
 
-  const filteredDisputes = disputes.filter(
-    (dispute) =>
-      dispute.market?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      dispute.user?.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      dispute.reason?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredDisputes = disputes.filter((dispute) =>
+    dispute.market?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    dispute.user?.username?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleString('en-US');
-  };
+  const headers = ['Market', 'User', 'Bond Amount', 'Reason', 'Status', 'Actions'];
 
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      pending: {
-        bg: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
-        label: 'Pending',
-      },
-      approved: {
-        bg: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-        label: 'Approved',
-      },
-      rejected: {
-        bg: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
-        label: 'Rejected',
-      },
-    };
-
-    const config = statusConfig[status?.toLowerCase()] || statusConfig.pending;
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${config.bg}`}>
-        {config.label}
-      </span>
-    );
-  };
-
-  const columns = [
-    {
-      header: 'Market',
-      accessor: 'market',
-      render: (row) => (
-        <div className="max-w-xs truncate" title={row.market?.title || row.market_id}>
-          {row.market?.title || row.market_id || 'N/A'}
-        </div>
-      ),
-    },
-    {
-      header: 'User',
-      accessor: 'user',
-      render: (row) => (
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-xs font-semibold">
-            {row.user?.username?.[0]?.toUpperCase() || 'U'}
-          </div>
-          <span className="text-gray-900 dark:text-white">
-            {row.user?.username || row.user_id || 'N/A'}
-          </span>
-        </div>
-      ),
-    },
-    {
-      header: 'Bond Amount',
-      accessor: 'bond_amount',
-      render: (row) => (
-        <span className="font-medium text-gray-900 dark:text-white">
-          ${(row.bond_amount || row.bond || 0).toFixed(2)}
+  const renderRow = (dispute) => (
+    <>
+      <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+        {dispute.market?.title || dispute.market_id || 'N/A'}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        {dispute.user?.username || dispute.user_id || 'N/A'}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+        ${dispute.bond_amount ? parseFloat(dispute.bond_amount).toFixed(2) : '0.00'}
+      </td>
+      <td className="px-6 py-4 text-sm text-gray-500 max-w-md truncate">
+        {dispute.reason || 'N/A'}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+          dispute.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+          dispute.status === 'approved' ? 'bg-green-100 text-green-800' :
+          dispute.status === 'rejected' ? 'bg-red-100 text-red-800' :
+          'bg-gray-100 text-gray-800'
+        }`}>
+          {dispute.status || 'N/A'}
         </span>
-      ),
-    },
-    {
-      header: 'Reason',
-      accessor: 'reason',
-      render: (row) => (
-        <div className="max-w-md truncate" title={row.reason || row.description}>
-          {row.reason || row.description || 'N/A'}
-        </div>
-      ),
-    },
-    {
-      header: 'Status',
-      accessor: 'status',
-      render: (row) => getStatusBadge(row.status),
-    },
-    {
-      header: 'Created',
-      accessor: 'created_at',
-      render: (row) => (
-        <span className="text-sm text-gray-600 dark:text-gray-400">
-          {formatDate(row.created_at || row.timestamp)}
-        </span>
-      ),
-    },
-    {
-      header: 'Actions',
-      accessor: 'actions',
-      render: (row) => {
-        if (row.status?.toLowerCase() !== 'pending') {
-          return <span className="text-gray-400 text-sm">Resolved</span>;
-        }
-        return (
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+        {dispute.status === 'pending' ? (
           <div className="flex items-center gap-2">
             <button
-              onClick={() => handleResolve(row.id, 'approve')}
-              disabled={processing === row.id}
-              className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors disabled:opacity-50"
-              title="Approve"
+              onClick={() => handleResolve(dispute.id, 'approve')}
+              disabled={resolving === dispute.id}
+              className="text-green-600 hover:text-green-800 flex items-center gap-1 disabled:opacity-50"
             >
-              <CheckCircle className="h-4 w-4" />
+              <CheckCircle size={16} />
+              Approve
             </button>
             <button
-              onClick={() => handleResolve(row.id, 'reject')}
-              disabled={processing === row.id}
-              className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
-              title="Reject"
+              onClick={() => handleResolve(dispute.id, 'reject')}
+              disabled={resolving === dispute.id}
+              className="text-red-600 hover:text-red-800 flex items-center gap-1 disabled:opacity-50"
             >
-              <XCircle className="h-4 w-4" />
+              <XCircle size={16} />
+              Reject
             </button>
           </div>
-        );
-      },
-    },
-  ];
+        ) : (
+          <span className="text-gray-400">Resolved</span>
+        )}
+      </td>
+    </>
+  );
 
-  const pendingCount = disputes.filter((d) => d.status?.toLowerCase() === 'pending').length;
+  const pendingCount = disputes.filter(d => d.status === 'pending').length;
 
   return (
-    <AdminLayout>
+    <AdminAuthGuard>
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Disputes</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Manage market disputes</p>
-        </div>
-
-        {/* Search */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search disputes by market, user, or reason..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Disputes</h1>
+            <p className="text-gray-600 mt-1">Review and resolve market disputes</p>
           </div>
-        </div>
-
-        {/* Stats Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Total Disputes</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{disputes.length}</p>
-          </div>
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-              <p className="text-sm text-yellow-800 dark:text-yellow-200">Pending</p>
+          {pendingCount > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-yellow-600" />
+              <span className="text-sm font-medium text-yellow-800">
+                {pendingCount} pending dispute{pendingCount !== 1 ? 's' : ''}
+              </span>
             </div>
-            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{pendingCount}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Approved</p>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
-              {disputes.filter((d) => d.status?.toLowerCase() === 'approved').length}
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Rejected</p>
-            <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">
-              {disputes.filter((d) => d.status?.toLowerCase() === 'rejected').length}
-            </p>
+          )}
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search by market or user..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Filter size={20} className="text-gray-400" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* Table */}
         <AdminTable
-          columns={columns}
+          headers={headers}
           data={filteredDisputes}
           loading={loading}
+          renderRow={renderRow}
           emptyMessage="No disputes found"
         />
       </div>
-    </AdminLayout>
+    </AdminAuthGuard>
   );
 }
-
 
