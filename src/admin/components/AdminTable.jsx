@@ -48,3 +48,4 @@ export default function AdminTable({ headers, data, loading, renderRow, emptyMes
   );
 }
 
+

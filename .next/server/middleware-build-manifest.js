@@ -32,15 +32,15 @@ self.__BUILD_MANIFEST = {
       "static/chunks/main.js",
       "static/chunks/pages/events.js"
     ],
-    "/events/[id]": [
+    "/login": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/events/[id].js"
+      "static/chunks/pages/login.js"
     ],
-    "/profile": [
+    "/signup": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/profile.js"
+      "static/chunks/pages/signup.js"
     ]
   },
   "ampFirstPages": []
