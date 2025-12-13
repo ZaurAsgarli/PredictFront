@@ -3,14 +3,15 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Trophy, User, LogOut, TrendingUp, Sparkles, Sun, Moon, Shield } from "lucide-react";
+import { Menu, X, Trophy, User, LogOut, TrendingUp, Sparkles, Shield, Sun, Moon } from "lucide-react";
+import { useTheme } from "@/src/contexts/ThemeContext";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [scrolled, setScrolled] = useState(false);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [mounted, setMounted] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -23,13 +24,6 @@ export default function Navbar() {
         setUser({ id: userId, username: userId.substring(0, 8) });
       }
 
-      // Check theme preference
-      const savedTheme = localStorage.getItem("theme") as "dark" | "light" | null;
-      if (savedTheme) {
-        setTheme(savedTheme);
-        document.documentElement.classList.toggle("dark", savedTheme === "dark");
-      }
-
       const handleScroll = () => {
         setScrolled(window.scrollY > 10);
       };
@@ -38,13 +32,6 @@ export default function Navbar() {
       return () => window.removeEventListener("scroll", handleScroll);
     }
   }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    document.documentElement.classList.toggle("dark", newTheme === "dark");
-  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -254,36 +241,6 @@ export default function Navbar() {
                 Admin
               </Link>
             )}
-            {/* Theme Toggle for Mobile */}
-            <div
-              className={`border-t pt-4 mt-4 ${
-                scrolled ? "border-gray-700/20" : "border-gray-200/20 dark:border-gray-700/20"
-              }`}
-            >
-              <button
-                onClick={() => {
-                  toggleTheme();
-                  setIsOpen(false);
-                }}
-                className={`flex items-center space-x-3 w-full text-left px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
-                  scrolled
-                    ? "text-white hover:text-gray-200 hover:bg-gray-700/50"
-                    : "text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
-                }`}
-              >
-                {theme === "dark" ? (
-                  <>
-                    <Sun className="h-5 w-5 text-yellow-500" />
-                    <span>Light Mode</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="h-5 w-5 text-gray-600" />
-                    <span>Dark Mode</span>
-                  </>
-                )}
-              </button>
-            </div>
 
             {user ? (
               <>
@@ -337,6 +294,37 @@ export default function Navbar() {
                 </button>
               </div>
             )}
+            
+            {/* Theme Toggle for Mobile */}
+            <div
+              className={`border-t pt-4 mt-4 ${
+                scrolled ? "border-gray-700/20" : "border-gray-200/20 dark:border-gray-700/20"
+              }`}
+            >
+              <button
+                onClick={() => {
+                  toggleTheme();
+                  setIsOpen(false);
+                }}
+                className={`flex items-center space-x-3 w-full text-left px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
+                  scrolled
+                    ? "text-white hover:text-gray-200 hover:bg-gray-700/50"
+                    : "text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+                }`}
+              >
+                {theme === "dark" ? (
+                  <>
+                    <Sun className="h-5 w-5 text-yellow-500" />
+                    <span>Light Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="h-5 w-5 text-gray-600" />
+                    <span>Dark Mode</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

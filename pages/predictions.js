@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { TrendingUp, Award, Target } from 'lucide-react';
 import PredictionCard from '../src/components/PredictionCard';
+import PredictionCardSkeleton from '../src/components/skeletons/PredictionCardSkeleton';
+import StatsCardSkeleton from '../src/components/skeletons/StatsCardSkeleton';
 import { predictionsService } from '../src/services/predictions';
 import { authService } from '../src/services/auth';
 
@@ -70,7 +72,13 @@ export default function Predictions() {
         </div>
 
         {/* Stats Cards */}
-        {stats && (
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            {[1, 2, 3, 4].map((i) => (
+              <StatsCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : stats ? (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between">
@@ -125,7 +133,7 @@ export default function Predictions() {
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Filter Tabs */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md mb-6">
@@ -150,10 +158,7 @@ export default function Predictions() {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="bg-white dark:bg-gray-700 rounded-lg shadow-md h-64 animate-pulse"
-              />
+              <PredictionCardSkeleton key={i} />
             ))}
           </div>
         ) : filteredPredictions.length > 0 ? (

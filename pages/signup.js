@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { TrendingUp, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
+import RotatingText from '../src/components/RotatingText';
 import { authService } from '../src/services/auth';
 
 export default function Signup() {
@@ -96,11 +97,23 @@ export default function Signup() {
 
         {/* Signup Card */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 text-center">
-            Create Account
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 text-center flex items-center justify-center gap-2 flex-wrap">
+            <span>Join</span>
+            <RotatingText
+              texts={['Us', 'Today', 'Now', 'PredictHub']}
+              mainClassName="px-2 sm:px-2 md:px-3 bg-purple-500 dark:bg-purple-600 text-white overflow-hidden py-0.5 sm:py-1 md:py-2 justify-center rounded-lg font-bold"
+              staggerFrom="last"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "-120%" }}
+              staggerDuration={0.025}
+              splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1 md:pb-1"
+              transition={{ type: "spring", damping: 30, stiffness: 400 }}
+              rotationInterval={2000}
+            />
           </h2>
           <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
-            Join the prediction community
+            Create your account and start predicting
           </p>
 
           {errors.submit && (

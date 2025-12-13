@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { TrendingUp, Mail, Lock, AlertCircle } from 'lucide-react';
 import { authService } from '../src/services/auth';
+import RotatingText from '../src/components/RotatingText';
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -76,8 +77,20 @@ export default function Login() {
 
         {/* Login Card */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
-            Welcome Back
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 text-center flex items-center justify-center gap-2 flex-wrap">
+            <span>Welcome</span>
+            <RotatingText
+              texts={['Back', 'Again', 'Home', 'Now']}
+              mainClassName="px-2 sm:px-2 md:px-3 bg-blue-500 dark:bg-blue-600 text-white overflow-hidden py-0.5 sm:py-1 md:py-2 justify-center rounded-lg font-bold"
+              staggerFrom="last"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "-120%" }}
+              staggerDuration={0.025}
+              splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1 md:pb-1"
+              transition={{ type: "spring", damping: 30, stiffness: 400 }}
+              rotationInterval={2000}
+            />
           </h2>
 
           {errors.submit && (

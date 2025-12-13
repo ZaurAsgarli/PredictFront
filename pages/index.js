@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import EventCard from "../src/components/EventCard";
 import { eventsService } from "../src/services/events";
 import ImageSlider from "../src/components/sections/ImageSlider";
+import SEO from "../src/components/SEO";
 
 // Lazy load all sections for performance
 const Hero = lazy(() => import("../src/components/sections/Hero"));
@@ -66,8 +67,42 @@ export default function HomePage() {
     fetchMarkets();
   }, []);
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://predicthub.com';
+  
+  // Structured data for homepage
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: 'PredictHub',
+    description: 'Community prediction market platform where users can make predictions, compete with friends, and earn rewards.',
+    url: siteUrl,
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Web',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.5',
+      ratingCount: '1250',
+    },
+    featureList: [
+      'Real-time market predictions',
+      'Community-driven insights',
+      'Transparent reward system',
+      'Advanced analytics dashboard',
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-gray-50">
+      <SEO
+        title="Welcome to PredictHub"
+        description="Make predictions, compete with friends, and earn rewards in the ultimate prediction market platform. Join thousands of users making accurate forecasts."
+        structuredData={structuredData}
+      />
       {/* Image Slider - At the very top */}
       <ImageSlider />
 

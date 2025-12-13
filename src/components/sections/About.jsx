@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import FlyIn from '../motion/FlyIn';
 import AnimatedSection from '../motion/AnimatedSection';
+import ScrambledText from '../ScrambledText';
 
 const features = [
   'Real-time market predictions',
@@ -38,11 +39,24 @@ const About = memo(() => {
                 </span>
               </h2>
 
-              <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
-                PredictHub is a cutting-edge platform that combines the excitement of prediction
-                markets with the power of community intelligence. Make informed predictions,
-                compete with others, and earn rewards.
-              </p>
+              <div className="text-xl text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
+                <ScrambledText
+                  className="scrambled-text-about"
+                  radius={100}
+                  duration={1.2}
+                  speed={0.5}
+                  scrambleChars=".:"
+                  style={{
+                    fontSize: 'inherit',
+                    color: 'inherit',
+                    fontFamily: 'inherit'
+                  }}
+                >
+                  PredictHub is a cutting-edge platform that combines the excitement of prediction
+                  markets with the power of community intelligence. Make informed predictions,
+                  compete with others, and earn rewards.
+                </ScrambledText>
+              </div>
 
               {/* Feature List */}
               <ul className="space-y-4 mb-8">

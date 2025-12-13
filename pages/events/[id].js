@@ -4,6 +4,7 @@ import { ArrowLeft, TrendingUp, TrendingDown, Clock, DollarSign, HelpCircle, Ext
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, Area, AreaChart } from 'recharts';
+import SEO from '../../src/components/SEO';
 import { eventsService } from '../../src/services/events';
 import { predictionsService } from '../../src/services/predictions';
 import { authService } from '../../src/services/auth';
@@ -278,8 +279,42 @@ The market will resolve on ${safeFormatDate(event?.ends_at)}.`;
     );
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://predicthub.com';
+  
+  // Structured data for event detail page
+  const structuredData = event ? {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: event.title,
+    description: event.description || `Prediction market for: ${event.title}`,
+    url: `${siteUrl}/events/${event.id}`,
+    startDate: event.ends_at,
+    endDate: event.ends_at,
+    eventStatus: event.status === 'active' ? 'EventScheduled' : 'EventCancelled',
+    organizer: {
+      '@type': 'Organization',
+      name: 'PredictHub',
+      url: siteUrl,
+    },
+    offers: {
+      '@type': 'Offer',
+      price: yesPrice,
+      priceCurrency: 'USD',
+      availability: event.status === 'active' ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+    },
+  } : null;
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
+      {event && (
+        <SEO
+          title={event.title}
+          description={event.description || `Make predictions on ${event.title}. Current probability: ${yesProbability}%`}
+          url={`${siteUrl}/events/${event.id}`}
+          type="article"
+          structuredData={structuredData}
+        />
+      )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
         <button

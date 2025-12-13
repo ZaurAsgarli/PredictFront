@@ -18,7 +18,7 @@ import Link from "next/link";
 
 export default function EventPage() {
   const params = useParams();
-  const eventId = params.id as string;
+  const eventId = params?.id as string;
   
   const [amount, setAmount] = useState("");
   const [outcome, setOutcome] = useState<"yes" | "no">("yes");
