@@ -97,14 +97,16 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-50">
-      <SEO
-        title="Welcome to PredictHub"
-        description="Make predictions, compete with friends, and earn rewards in the ultimate prediction market platform. Join thousands of users making accurate forecasts."
-        structuredData={structuredData}
-      />
-      {/* Image Slider - At the very top */}
-      <ImageSlider />
+    <div className="relative min-h-screen bg-gray-950 text-gray-50 overflow-hidden">
+      {/* Content */}
+      <div className="relative z-10">
+        <SEO
+          title="Welcome to PredictHub"
+          description="Make predictions, compete with friends, and earn rewards in the ultimate prediction market platform. Join thousands of users making accurate forecasts."
+          structuredData={structuredData}
+        />
+        {/* Image Slider - At the very top */}
+        <ImageSlider />
 
       {/* 3D Hero Section */}
       <Suspense fallback={<SectionLoader />}>
@@ -140,6 +142,7 @@ export default function HomePage() {
       <Suspense fallback={<SectionLoader />}>
         <FooterCTA />
       </Suspense>
+      </div>
     </div>
   );
 }

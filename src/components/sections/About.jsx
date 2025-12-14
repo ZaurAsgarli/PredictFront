@@ -23,7 +23,7 @@ const About = memo(() => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: false }}
+                viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
                 className="inline-block px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-full mb-6"
               >
@@ -83,7 +83,7 @@ const About = memo(() => {
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: false }}
+                viewport={{ once: true }}
                 transition={{ duration: 0.8, delay: 0.2 }}
                 className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-blue-500/10 to-purple-500/10 p-6 border border-gray-200 dark:border-gray-800"
               >
@@ -118,7 +118,7 @@ const About = memo(() => {
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: false }}
+                      viewport={{ once: true }}
                       transition={{ delay: 0.6 }}
                       className="px-6 py-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20"
                     >

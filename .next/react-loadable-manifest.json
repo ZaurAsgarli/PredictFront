@@ -1,1 +1,98 @@
-{}
+{
+  "pages\\_app.js -> ../components/TargetCursor": {
+    "id": "pages\\_app.js -> ../components/TargetCursor",
+    "files": [
+      "static/chunks/components_TargetCursor_jsx.js"
+    ]
+  },
+  "pages\\_app.js -> ../src/components/CustomCursor": {
+    "id": "pages\\_app.js -> ../src/components/CustomCursor",
+    "files": [
+      "static/chunks/src_components_CustomCursor_jsx.js"
+    ]
+  },
+  "pages\\_app.js -> ../src/components/Loader": {
+    "id": "pages\\_app.js -> ../src/components/Loader",
+    "files": [
+      "static/chunks/src_components_Loader_jsx.js"
+    ]
+  },
+  "pages\\index.js -> ../src/components/sections/About": {
+    "id": "pages\\index.js -> ../src/components/sections/About",
+    "files": [
+      "static/chunks/src_components_sections_About_jsx.js"
+    ]
+  },
+  "pages\\index.js -> ../src/components/sections/FeaturedEvents": {
+    "id": "pages\\index.js -> ../src/components/sections/FeaturedEvents",
+    "files": [
+      "static/chunks/src_components_sections_FeaturedEvents_jsx.js"
+    ]
+  },
+  "pages\\index.js -> ../src/components/sections/Features": {
+    "id": "pages\\index.js -> ../src/components/sections/Features",
+    "files": [
+      "static/chunks/src_components_sections_Features_jsx.js"
+    ]
+  },
+  "pages\\index.js -> ../src/components/sections/FooterCTA": {
+    "id": "pages\\index.js -> ../src/components/sections/FooterCTA",
+    "files": [
+      "static/chunks/src_components_sections_FooterCTA_jsx.js"
+    ]
+  },
+  "pages\\index.js -> ../src/components/sections/Hero": {
+    "id": "pages\\index.js -> ../src/components/sections/Hero",
+    "files": [
+      "static/chunks/src_components_sections_Hero_jsx.js"
+    ]
+  },
+  "pages\\index.js -> ../src/components/sections/ScrollShowcase": {
+    "id": "pages\\index.js -> ../src/components/sections/ScrollShowcase",
+    "files": [
+      "static/chunks/src_components_sections_ScrollShowcase_jsx.js"
+    ]
+  },
+  "pages\\index.js -> ../src/components/sections/Testimonials": {
+    "id": "pages\\index.js -> ../src/components/sections/Testimonials",
+    "files": [
+      "static/chunks/src_components_sections_Testimonials_jsx.js"
+    ]
+  },
+  "src\\components\\AnimatedCircle.jsx -> animejs/animatable": {
+    "id": "src\\components\\AnimatedCircle.jsx -> animejs/animatable",
+    "files": [
+      "static/chunks/node_modules_animejs_dist_modules_animatable_index_js.js"
+    ]
+  },
+  "src\\components\\AnimatedCircle.jsx -> animejs/utils": {
+    "id": "src\\components\\AnimatedCircle.jsx -> animejs/utils",
+    "files": [
+      "static/chunks/node_modules_animejs_dist_modules_utils_index_js.js"
+    ]
+  },
+  "src\\components\\Footer.jsx -> ../../components/LogoLoop": {
+    "id": "src\\components\\Footer.jsx -> ../../components/LogoLoop",
+    "files": [
+      "static/chunks/components_LogoLoop_jsx.js"
+    ]
+  },
+  "src\\components\\sections\\Hero.jsx -> ../AnimatedCircle": {
+    "id": "src\\components\\sections\\Hero.jsx -> ../AnimatedCircle",
+    "files": [
+      "static/chunks/src_components_AnimatedCircle_jsx.js"
+    ]
+  },
+  "src\\components\\sections\\Hero.jsx -> ../Blob": {
+    "id": "src\\components\\sections\\Hero.jsx -> ../Blob",
+    "files": [
+      "static/chunks/src_components_Blob_jsx.js"
+    ]
+  },
+  "src\\components\\sections\\Hero.jsx -> @react-three/fiber": {
+    "id": "src\\components\\sections\\Hero.jsx -> @react-three/fiber",
+    "files": [
+      "static/chunks/node_modules_react-three_fiber_dist_react-three-fiber_esm_js.js"
+    ]
+  }
+}

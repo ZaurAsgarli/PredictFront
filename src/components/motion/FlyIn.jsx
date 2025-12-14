@@ -11,7 +11,7 @@ const FlyIn = ({
   distance = 100
 }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: false, amount: 0.2 });
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
 
   const getInitialPosition = () => {
     switch (direction) {

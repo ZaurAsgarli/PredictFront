@@ -1,10 +1,46 @@
 import Link from 'next/link';
 import { TrendingUp, Twitter, Github, Linkedin } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { SiReact, SiNextdotjs, SiTypescript, SiTailwindcss, SiNodedotjs, SiFramer } from 'react-icons/si';
+
+// Dynamically import LogoLoop to avoid SSR issues
+const LogoLoop = dynamic(() => import('../../components/LogoLoop'), {
+  ssr: false,
+});
 
 export default function Footer() {
+  const techLogos = [
+    { node: <SiReact className="w-12 h-12" />, title: "React", href: "https://react.dev" },
+    { node: <SiNextdotjs className="w-12 h-12" />, title: "Next.js", href: "https://nextjs.org" },
+    { node: <SiTypescript className="w-12 h-12" />, title: "TypeScript", href: "https://www.typescriptlang.org" },
+    { node: <SiTailwindcss className="w-12 h-12" />, title: "Tailwind CSS", href: "https://tailwindcss.com" },
+    { node: <SiNodedotjs className="w-12 h-12" />, title: "Node.js", href: "https://nodejs.org" },
+    { node: <SiFramer className="w-12 h-12" />, title: "Framer Motion", href: "https://www.framer.com/motion" },
+  ];
+
   return (
     <footer className="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white mt-auto z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Tech Stack Logo Loop */}
+        <div className="mb-12 py-8 border-b border-gray-200 dark:border-gray-800">
+          <h3 className="text-center text-sm font-semibold text-gray-600 dark:text-gray-400 mb-6 uppercase tracking-wider">
+            Built With
+          </h3>
+          <div className="relative h-16 overflow-hidden">
+            <LogoLoop
+              logos={techLogos}
+              speed={80}
+              direction="left"
+              logoHeight={48}
+              gap={48}
+              hoverSpeed={20}
+              scaleOnHover
+              fadeOut
+              ariaLabel="Technology stack"
+            />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-1">

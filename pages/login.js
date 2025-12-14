@@ -69,14 +69,14 @@ export default function Login() {
       <div className="max-w-md w-full">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center space-x-2">
+          <Link href="/" className="inline-flex items-center space-x-2 cursor-target">
             <TrendingUp className="h-12 w-12 text-white" />
             <span className="text-3xl font-bold text-white">PredictHub</span>
           </Link>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 cursor-target">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 text-center flex items-center justify-center gap-2 flex-wrap">
             <span>Welcome</span>
             <RotatingText
@@ -114,7 +114,7 @@ export default function Login() {
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className={`w-full pl-10 pr-4 py-2 border ${
+                  className={`w-full pl-10 pr-4 py-2 border cursor-target ${
                     errors.email
                       ? 'border-red-500'
                       : 'border-gray-300 dark:border-gray-600'
@@ -140,7 +140,7 @@ export default function Login() {
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })
                   }
-                  className={`w-full pl-10 pr-4 py-2 border ${
+                  className={`w-full pl-10 pr-4 py-2 border cursor-target ${
                     errors.password
                       ? 'border-red-500'
                       : 'border-gray-300 dark:border-gray-600'
@@ -159,18 +159,18 @@ export default function Login() {
                 <input
                   type="checkbox"
                   id="remember"
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded cursor-target"
                 />
                 <label
                   htmlFor="remember"
-                  className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+                  className="ml-2 block text-sm text-gray-700 dark:text-gray-300 cursor-target"
                 >
                   Remember me
                 </label>
               </div>
               <a
                 href="#"
-                className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
+                className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 cursor-target"
               >
                 Forgot password?
               </a>
@@ -180,7 +180,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-target"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
@@ -191,7 +191,7 @@ export default function Login() {
             Don't have an account?{' '}
             <Link
               href="/signup"
-              className="text-primary-600 hover:text-primary-700 dark:text-primary-400 font-semibold"
+              className="text-primary-600 hover:text-primary-700 dark:text-primary-400 font-semibold cursor-target"
             >
               Sign up
             </Link>

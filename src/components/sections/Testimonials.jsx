@@ -1,7 +1,7 @@
 import { memo, useState, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
-import { Star, Quote } from 'lucide-react';
+import { Star, Quote, Briefcase, TrendingUp, Users } from 'lucide-react';
 import AnimatedSection from '../motion/AnimatedSection';
 
 const testimonials = [
@@ -10,28 +10,28 @@ const testimonials = [
     role: 'Professional Predictor',
     content: 'PredictHub has completely transformed how I approach predictions. The community insights are invaluable.',
     rating: 5,
-    avatar: '👩‍💼',
+    icon: Briefcase,
   },
   {
     name: 'Michael Rodriguez',
     role: 'Trading Enthusiast',
     content: 'The real-time market updates and analytics help me make better decisions. Highly recommended!',
     rating: 5,
-    avatar: '👨‍💻',
+    icon: TrendingUp,
   },
   {
     name: 'Emily Johnson',
     role: 'Community Leader',
     content: 'Love the competitive aspect and the rewards system. It keeps me engaged and motivated.',
     rating: 5,
-    avatar: '👩‍🎓',
+    icon: Users,
   },
 ];
 
 const Counter = ({ end, duration = 2, suffix = '' }) => {
   const [count, setCount] = useState(0);
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: false });
+  const isInView = useInView(ref, { once: true });
 
   useEffect(() => {
     if (!isInView) return;
@@ -70,7 +70,7 @@ const Testimonials = memo(() => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false }}
+            viewport={{ once: true }}
             transition={{ duration: 0.6 }}
             className="inline-block px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-full mb-6"
           >
@@ -102,50 +102,55 @@ const Testimonials = memo(() => {
 
         {/* Testimonials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
-            <AnimatedSection
-              key={testimonial.name}
-              direction="up"
-              delay={index * 0.1}
-              className="relative"
-            >
-              <motion.div
-                whileHover={{ y: -8, scale: 1.02 }}
-                transition={{ duration: 0.3 }}
-                className="relative h-full p-8 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300"
+          {testimonials.map((testimonial, index) => {
+            const IconComponent = testimonial.icon;
+            return (
+              <AnimatedSection
+                key={testimonial.name}
+                direction="up"
+                delay={index * 0.1}
+                className="relative"
               >
-                {/* Quote icon */}
-                <Quote className="absolute top-6 right-6 w-12 h-12 text-blue-500/20" />
+                <motion.div
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  transition={{ duration: 0.3 }}
+                  className="relative h-full p-8 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  {/* Quote icon */}
+                  <Quote className="absolute top-6 right-6 w-12 h-12 text-blue-500/20" />
 
-                {/* Rating */}
-                <div className="flex gap-1 mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-
-                {/* Content */}
-                <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
-                  "{testimonial.content}"
-                </p>
-
-                {/* Author */}
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-2xl">
-                    {testimonial.avatar}
+                  {/* Rating */}
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    ))}
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">
-                      {testimonial.name}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {testimonial.role}
-                    </p>
+
+                  {/* Content */}
+                  <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
+                    "{testimonial.content}"
+                  </p>
+
+                  {/* Author */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                      {IconComponent && (
+                        <IconComponent className="w-6 h-6 text-white" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        {testimonial.name}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {testimonial.role}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            </AnimatedSection>
-          ))}
+                </motion.div>
+              </AnimatedSection>
+            );
+          })}
         </div>
       </div>
     </section>

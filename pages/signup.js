@@ -89,14 +89,14 @@ export default function Signup() {
       <div className="max-w-md w-full">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center space-x-2">
+          <Link href="/" className="inline-flex items-center space-x-2 cursor-target">
             <TrendingUp className="h-12 w-12 text-white" />
             <span className="text-3xl font-bold text-white">PredictHub</span>
           </Link>
         </div>
 
         {/* Signup Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 cursor-target">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 text-center flex items-center justify-center gap-2 flex-wrap">
             <span>Join</span>
             <RotatingText
@@ -137,7 +137,7 @@ export default function Signup() {
                   onChange={(e) =>
                     setFormData({ ...formData, username: e.target.value })
                   }
-                  className={`w-full pl-10 pr-4 py-2 border ${
+                  className={`w-full pl-10 pr-4 py-2 border cursor-target ${
                     errors.username
                       ? 'border-red-500'
                       : 'border-gray-300 dark:border-gray-600'
@@ -163,7 +163,7 @@ export default function Signup() {
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className={`w-full pl-10 pr-4 py-2 border ${
+                  className={`w-full pl-10 pr-4 py-2 border cursor-target ${
                     errors.email
                       ? 'border-red-500'
                       : 'border-gray-300 dark:border-gray-600'
@@ -189,7 +189,7 @@ export default function Signup() {
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })
                   }
-                  className={`w-full pl-10 pr-4 py-2 border ${
+                  className={`w-full pl-10 pr-4 py-2 border cursor-target ${
                     errors.password
                       ? 'border-red-500'
                       : 'border-gray-300 dark:border-gray-600'
@@ -215,7 +215,7 @@ export default function Signup() {
                   onChange={(e) =>
                     setFormData({ ...formData, confirmPassword: e.target.value })
                   }
-                  className={`w-full pl-10 pr-4 py-2 border ${
+                  className={`w-full pl-10 pr-4 py-2 border cursor-target ${
                     errors.confirmPassword
                       ? 'border-red-500'
                       : 'border-gray-300 dark:border-gray-600'
@@ -234,18 +234,18 @@ export default function Signup() {
                 type="checkbox"
                 id="terms"
                 required
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded mt-1"
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded mt-1 cursor-target"
               />
               <label
                 htmlFor="terms"
-                className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+                className="ml-2 block text-sm text-gray-700 dark:text-gray-300 cursor-target"
               >
                 I agree to the{' '}
-                <a href="#" className="text-primary-600 hover:text-primary-700">
+                <a href="#" className="text-primary-600 hover:text-primary-700 cursor-target">
                   Terms of Service
                 </a>{' '}
                 and{' '}
-                <a href="#" className="text-primary-600 hover:text-primary-700">
+                <a href="#" className="text-primary-600 hover:text-primary-700 cursor-target">
                   Privacy Policy
                 </a>
               </label>
@@ -255,7 +255,7 @@ export default function Signup() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-target"
             >
               {loading ? (
                 'Creating Account...'
@@ -273,7 +273,7 @@ export default function Signup() {
             Already have an account?{' '}
             <Link
               href="/login"
-              className="text-primary-600 hover:text-primary-700 dark:text-primary-400 font-semibold"
+              className="text-primary-600 hover:text-primary-700 dark:text-primary-400 font-semibold cursor-target"
             >
               Sign in
             </Link>

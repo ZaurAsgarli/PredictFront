@@ -6,6 +6,12 @@ import PredictionCardSkeleton from '../src/components/skeletons/PredictionCardSk
 import StatsCardSkeleton from '../src/components/skeletons/StatsCardSkeleton';
 import { predictionsService } from '../src/services/predictions';
 import { authService } from '../src/services/auth';
+import dynamic from 'next/dynamic';
+
+// Dynamically import TextPressure to avoid SSR issues
+const TextPressure = dynamic(() => import('../components/TextPressure'), {
+  ssr: false,
+});
 
 export default function Predictions() {
   const [predictions, setPredictions] = useState([]);
@@ -61,14 +67,33 @@ export default function Predictions() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            My Predictions
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+        {/* Header with TextPressure */}
+        <div className="mb-12">
+          <div className="relative h-[200px] md:h-[300px] mb-6 flex items-center justify-center">
+            <div className="w-full text-pressure-wrapper">
+              <TextPressure
+                text="My Predictions"
+                flex={true}
+                alpha={false}
+                stroke={false}
+                width={true}
+                weight={true}
+                italic={true}
+                textColor="#111827"
+                strokeColor="#3b82f6"
+                minFontSize={36}
+              />
+            </div>
+          </div>
+          <p className="text-center text-gray-600 dark:text-gray-400 text-lg">
             Track and manage your predictions
           </p>
+          <style jsx global>{`
+            :global(.dark .text-pressure-wrapper .text-pressure-title),
+            :global(.dark .text-pressure-wrapper .text-pressure-title span) {
+              color: #ffffff !important;
+            }
+          `}</style>
         </div>
 
         {/* Stats Cards */}

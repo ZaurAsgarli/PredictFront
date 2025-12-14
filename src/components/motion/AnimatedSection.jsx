@@ -11,7 +11,7 @@ const AnimatedSection = ({
   amount = 0.3
 }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: false, amount });
+  const isInView = useInView(ref, { once: true, amount });
 
   const variants = {
     hidden: {

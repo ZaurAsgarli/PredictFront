@@ -4,6 +4,8 @@ import Footer from '../src/components/Footer';
 import { ThemeProvider } from '../src/contexts/ThemeContext';
 import dynamic from 'next/dynamic';
 import PageTransition from '../src/components/PageTransition';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 
 // Dynamically import client-only components to avoid SSR hydration issues
 const Loader = dynamic(() => import('../src/components/Loader'), {
@@ -14,11 +16,31 @@ const CustomCursor = dynamic(() => import('../src/components/CustomCursor'), {
   ssr: false,
 });
 
+const TargetCursor = dynamic(() => import('../components/TargetCursor'), {
+  ssr: false,
+});
+
+function CursorManager() {
+  const router = useRouter();
+  const [isLoginOrSignup, setIsLoginOrSignup] = useState(false);
+
+  useEffect(() => {
+    const path = router.pathname;
+    setIsLoginOrSignup(path === '/login' || path === '/signup');
+  }, [router.pathname]);
+
+  if (isLoginOrSignup) {
+    return <TargetCursor spinDuration={2} hideDefaultCursor={true} parallaxOn={true} />;
+  }
+
+  return <CustomCursor />;
+}
+
 function MyApp({ Component, pageProps }) {
   return (
     <ThemeProvider>
       <Loader variant="gradient-ring" />
-      <CustomCursor />
+      <CursorManager />
       <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
         <Navbar />
         <main className="flex-grow pt-20 md:pt-24">
