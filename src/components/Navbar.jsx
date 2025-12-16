@@ -1,19 +1,22 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Menu, X, Trophy, User, LogOut, TrendingUp, Sparkles, Sun, Moon } from 'lucide-react';
+import { Menu, X, Trophy, User, LogOut, TrendingUp, Sparkles, Sun, Moon, Shield } from 'lucide-react';
 import { authService } from '../services/auth';
 import { useTheme } from '../contexts/ThemeContext';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
   const { theme, toggleTheme, mounted } = useTheme();
 
   useEffect(() => {
-    setUser(authService.getCurrentUserSync());
+    const currentUser = authService.getCurrentUserSync();
+    setUser(currentUser);
+    setIsAdmin(authService.isAdmin());
     
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -21,11 +24,12 @@ export default function Navbar() {
     
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [router.pathname]);
 
   const handleLogout = () => {
     authService.logout();
     setUser(null);
+    setIsAdmin(false);
     router.push('/login');
   };
 
@@ -102,6 +106,21 @@ export default function Navbar() {
               <Trophy className="h-4 w-4 mr-2" />
               Leaderboard
             </Link>
+
+            {/* Admin Button - Only visible to admins */}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:bg-purple-50 dark:hover:bg-purple-900/20 ${
+                  scrolled 
+                    ? 'text-white hover:text-gray-200 bg-purple-600/80 hover:bg-purple-600' 
+                    : 'text-purple-700 hover:text-purple-600 dark:text-purple-400 dark:hover:text-purple-300 bg-purple-100 dark:bg-purple-900/30'
+                }`}
+              >
+                <Shield className="h-4 w-4" />
+                <span>Admin</span>
+              </Link>
+            )}
 
             {/* Theme Toggle */}
             <button
@@ -246,6 +265,21 @@ export default function Navbar() {
             >
               Leaderboard
             </Link>
+            {/* Admin Button for Mobile - Only visible to admins */}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
+                  scrolled
+                    ? 'text-white hover:text-gray-200 hover:bg-gray-700/50'
+                    : 'text-purple-700 hover:text-purple-600 dark:text-purple-400 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20'
+                }`}
+                onClick={() => setIsOpen(false)}
+              >
+                <Shield className="h-5 w-5" />
+                <span>Admin Dashboard</span>
+              </Link>
+            )}
             {/* Theme Toggle for Mobile */}
             <div className={`border-t pt-4 mt-4 ${
               scrolled ? 'border-gray-700/20' : 'border-gray-200/20 dark:border-gray-700/20'

@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { TrendingUp, Mail, Lock, AlertCircle } from 'lucide-react';
 import { authService } from '../src/services/auth';
 import RotatingText from '../src/components/RotatingText';
+import { toast } from 'react-toastify';
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -39,13 +40,24 @@ export default function Login() {
       console.log('Login response:', response);
       const user = response.user || JSON.parse(localStorage.getItem('user') || '{}');
       
-      // Redirect based on role
-      if (user.role === 'admin') {
-        router.push('/admin');
-      } else {
-        router.push('/');
+      // Always redirect to home page
+      router.push('/');
+      
+      // Check if user is admin and show toast notification
+      if (user.is_staff === true || user.role === 'admin') {
+        toast.success('Welcome back, Admin! You have administrator privileges.', {
+          position: 'top-right',
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+        });
       }
-      window.location.reload(); // Reload to update navbar
+      
+      // Small delay before reload to allow toast to show
+      setTimeout(() => {
+        window.location.reload(); // Reload to update navbar
+      }, 100);
     } catch (error) {
       console.error('Login error:', error);
       console.error('Login error URL:', error.config?.url);

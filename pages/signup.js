@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { TrendingUp, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
 import RotatingText from '../src/components/RotatingText';
 import { authService } from '../src/services/auth';
+import { toast } from 'react-toastify';
 
 export default function Signup() {
   const [formData, setFormData] = useState({
@@ -59,13 +60,29 @@ export default function Signup() {
       });
       const user = response.user || JSON.parse(localStorage.getItem('user') || '{}');
       
-      // Redirect based on role (new users will be 'user' by default)
-      if (user.role === 'admin') {
-        router.push('/admin');
+      // Always redirect to home page
+      router.push('/');
+      
+      // Check if user is admin and show toast notification
+      if (user.is_staff === true || user.role === 'admin') {
+        toast.success('Account created! You have administrator privileges.', {
+          position: 'top-right',
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+        });
       } else {
-        router.push('/');
+        toast.success('Account created successfully! Welcome to PredictHub!', {
+          position: 'top-right',
+          autoClose: 3000,
+        });
       }
-      window.location.reload(); // Reload to update navbar
+      
+      // Small delay before reload to allow toast to show
+      setTimeout(() => {
+        window.location.reload(); // Reload to update navbar
+      }, 100);
     } catch (error) {
       // Extract error message from backend response
       const errorMessage = error.response?.data?.password?.[0] || 

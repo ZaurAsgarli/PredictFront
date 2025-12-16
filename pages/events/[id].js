@@ -8,6 +8,7 @@ import SEO from '../../src/components/SEO';
 import { eventsService } from '../../src/services/events';
 import { predictionsService } from '../../src/services/predictions';
 import { authService } from '../../src/services/auth';
+import { toast } from 'react-toastify';
 
 // Helper function to safely format dates
 const safeFormatDate = (dateValue, formatStr = 'MMM dd, yyyy') => {
@@ -171,7 +172,7 @@ The market will resolve on ${safeFormatDate(event?.ends_at)}.`;
     }
 
     if (!amount || parseFloat(amount) <= 0) {
-      alert('Please enter a valid amount');
+      toast.error('Please enter a valid amount');
       return;
     }
 
@@ -180,7 +181,7 @@ The market will resolve on ${safeFormatDate(event?.ends_at)}.`;
       // Ensure market_id is a number
       const marketId = parseInt(id, 10);
       if (isNaN(marketId)) {
-        alert('Invalid market ID');
+        toast.error('Invalid market ID');
         setSubmitting(false);
         return;
       }
@@ -193,7 +194,7 @@ The market will resolve on ${safeFormatDate(event?.ends_at)}.`;
         trade_type: tradeType,
         amount_staked: parseFloat(amount),
       });
-      alert('Trade executed successfully!');
+      toast.success('Trade executed successfully!');
       setAmount('');
       // Reload event data to show updated prices
       await loadEventData();
@@ -205,7 +206,7 @@ The market will resolve on ${safeFormatDate(event?.ends_at)}.`;
                           error.response?.data?.detail ||
                           error.message || 
                           'Failed to execute trade. Please try again.';
-      alert(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }

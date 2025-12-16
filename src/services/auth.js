@@ -76,5 +76,12 @@ export const authService = {
     if (typeof window === 'undefined') return false;
     return !!localStorage.getItem('token');
   },
+
+  // Check if user is admin
+  isAdmin: () => {
+    if (typeof window === 'undefined') return false;
+    const user = authService.getCurrentUserSync();
+    return user?.is_staff === true || user?.role === 'admin';
+  },
 };
 

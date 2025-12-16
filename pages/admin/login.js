@@ -1,3 +1,23 @@
+import { useEffect } from 'react';
+
+export default function AdminLogin() {
+  useEffect(() => {
+    // Redirect to admin app login
+    window.location.href = 'http://localhost:3001/login';
+  }, []);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Redirecting to admin login...</p>
+      </div>
+    </div>
+  );
+}
+
+// Old implementation - now redirects to separate admin app
+/*
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { LogIn, Lock, Mail, AlertCircle } from 'lucide-react';

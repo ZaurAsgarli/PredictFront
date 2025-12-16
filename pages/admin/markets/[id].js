@@ -1,3 +1,29 @@
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
+
+export default function MarketDetail() {
+  const router = useRouter();
+  const { id } = router.query;
+
+  useEffect(() => {
+    if (id) {
+      // Redirect to admin app market detail
+      window.location.href = `http://localhost:3001/markets/${id}`;
+    }
+  }, [id]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Redirecting to market details...</p>
+      </div>
+    </div>
+  );
+}
+
+// Old implementation - now redirects to separate admin app
+/*
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { ArrowLeft, CheckCircle, TrendingUp, Users, Clock, DollarSign } from 'lucide-react';
@@ -7,6 +33,7 @@ import Link from 'next/link';
 import { adminApi } from '../../../src/admin/services/adminApi';
 import { format } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { toast } from 'react-toastify';
 
 export default function MarketDetail() {
   const router = useRouter();
@@ -65,7 +92,7 @@ export default function MarketDetail() {
   const handleResolve = async () => {
     const outcome = prompt('Enter outcome (YES or NO):');
     if (!outcome || !['YES', 'NO'].includes(outcome.toUpperCase())) {
-      alert('Invalid outcome. Please enter YES or NO.');
+      toast.error('Invalid outcome. Please enter YES or NO.');
       return;
     }
 
@@ -76,10 +103,10 @@ export default function MarketDetail() {
     try {
       setResolving(true);
       await adminApi.resolveMarket(id, outcome.toUpperCase());
-      alert('Market resolved successfully!');
+      toast.success('Market resolved successfully!');
       loadMarketData();
     } catch (error) {
-      alert(error.response?.data?.message || 'Error resolving market');
+      toast.error(error.response?.data?.message || 'Error resolving market');
     } finally {
       setResolving(false);
     }

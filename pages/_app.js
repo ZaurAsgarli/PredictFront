@@ -6,6 +6,8 @@ import dynamic from 'next/dynamic';
 import PageTransition from '../src/components/PageTransition';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Dynamically import client-only components to avoid SSR hydration issues
 const Loader = dynamic(() => import('../src/components/Loader'), {
@@ -41,6 +43,18 @@ function MyApp({ Component, pageProps }) {
     <ThemeProvider>
       <Loader variant="gradient-ring" />
       <CursorManager />
+      <ToastContainer
+        position="top-right"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
       <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
         <Navbar />
         <main className="flex-grow pt-20 md:pt-24">
