@@ -5,15 +5,27 @@ export const leaderboardService = {
   getGlobalLeaderboard: async (params = {}) => {
     try {
       const response = await api.get('/analytics/global/');
-      // Backend currently returns placeholder, so generate mock data from trades
-      // In production, this should return actual leaderboard data
-      if (response.data.message && response.data.message.includes('not implemented')) {
+      // Backend now returns actual array of users
+      const data = response.data;
+
+      // Handle array response (new backend) or fallback message (old backend)
+      if (Array.isArray(data) && data.length > 0) {
+        return data;
+      }
+
+      // If backend returns empty array, that's valid - return it
+      if (Array.isArray(data)) {
+        return data;
+      }
+
+      // Only use mock if backend returns a "not implemented" message
+      if (data.message && data.message.includes('not implemented')) {
         return generateMockLeaderboard('global');
       }
-      return Array.isArray(response.data) ? response.data : response.data.results || [];
+
+      return data.results || [];
     } catch (error) {
       console.error('Error fetching global leaderboard:', error);
-      // Return mock data if backend not implemented
       return generateMockLeaderboard('global');
     }
   },
@@ -22,10 +34,15 @@ export const leaderboardService = {
   getWeeklyLeaderboard: async () => {
     try {
       const response = await api.get('/analytics/weekly/');
-      if (response.data.message && response.data.message.includes('not implemented')) {
+      const data = response.data;
+
+      if (Array.isArray(data)) {
+        return data;
+      }
+      if (data.message && data.message.includes('not implemented')) {
         return generateMockLeaderboard('weekly');
       }
-      return Array.isArray(response.data) ? response.data : response.data.results || [];
+      return data.results || [];
     } catch (error) {
       console.error('Error fetching weekly leaderboard:', error);
       return generateMockLeaderboard('weekly');
@@ -36,10 +53,15 @@ export const leaderboardService = {
   getMonthlyLeaderboard: async () => {
     try {
       const response = await api.get('/analytics/monthly/');
-      if (response.data.message && response.data.message.includes('not implemented')) {
+      const data = response.data;
+
+      if (Array.isArray(data)) {
+        return data;
+      }
+      if (data.message && data.message.includes('not implemented')) {
         return generateMockLeaderboard('monthly');
       }
-      return Array.isArray(response.data) ? response.data : response.data.results || [];
+      return data.results || [];
     } catch (error) {
       console.error('Error fetching monthly leaderboard:', error);
       return generateMockLeaderboard('monthly');
@@ -50,17 +72,19 @@ export const leaderboardService = {
   getUserRank: async (userId) => {
     try {
       const response = await api.get(`/analytics/user/${userId}/`);
-      if (response.data.message && response.data.message.includes('not implemented')) {
-        // Calculate from user's trades/positions
+      const data = response.data;
+
+      if (data.error) {
         return await calculateUserRank(userId);
       }
-      return response.data;
+      return data;
     } catch (error) {
       console.error('Error fetching user rank:', error);
       return await calculateUserRank(userId);
     }
   },
 };
+
 
 // Generate mock leaderboard data when backend is not implemented
 function generateMockLeaderboard(type) {
@@ -119,7 +143,7 @@ async function calculateUserRank(userId) {
   try {
     const { predictionsService } = await import('./predictions');
     const stats = await predictionsService.getPredictionStats(userId);
-    
+
     // This is a simplified calculation
     // In production, the backend should calculate the actual rank
     return {

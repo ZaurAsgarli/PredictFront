@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+// Hardcode API URL to ensure it works in standalone admin app
+const API_URL = 'http://localhost:8000/api';
 
 // Create axios instance for admin API calls
 const adminAxios = axios.create({
@@ -33,7 +34,7 @@ adminAxios.interceptors.response.use(
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/admin/login';
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
@@ -42,7 +43,7 @@ adminAxios.interceptors.response.use(
 export const adminApi = {
   // Admin Login
   adminLogin: async (email, password) => {
-    const response = await adminAxios.post('/auth/login/', { email, password });
+    const response = await adminAxios.post('/users/login/', { email, password });
     const accessToken = response.data.tokens?.access || response.data.token;
     if (accessToken && typeof window !== 'undefined') {
       localStorage.setItem('token', accessToken);
@@ -107,19 +108,19 @@ export const adminApi = {
 
   // Resolve Dispute
   resolveDispute: async (id, action) => {
-    const response = await adminAxios.post(`/disputes/${id}/resolve/`, { action });
+    const response = await adminAxios.post(`/disputes/${id}/resolve`, { action });
     return response.data;
   },
 
-  // Get Users / Leaderboard
+  // Get Users (via leaderboard - the only user list endpoint available)
   getUsers: async (params = {}) => {
-    const response = await adminAxios.get('/leaderboard/global/', { params });
+    const response = await adminAxios.get('/users/leaderboard/', { params });
     return response.data;
   },
 
   // Get User Details
   getUserDetails: async (id) => {
-    const response = await adminAxios.get(`/leaderboard/user/${id}/`);
+    const response = await adminAxios.get(`/users/${id}/`);
     return response.data;
   },
 };

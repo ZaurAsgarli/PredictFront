@@ -59,7 +59,7 @@ export default function SEO({
 
       {/* Additional Meta Tags */}
       <meta name="theme-color" content="#0ea5e9" />
-      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta name="mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       <meta name="apple-mobile-web-app-title" content="PredictHub" />
       <meta name="application-name" content="PredictHub" />

@@ -1,16 +1,19 @@
 import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 
 export default function AdminRedirect() {
+  const router = useRouter();
+  
   useEffect(() => {
-    // Redirect directly to admin app - it will handle authentication
-    window.location.href = 'http://localhost:3001';
-  }, []);
+    // Redirect to admin dashboard within the same app
+    router.push('/admin/dashboard');
+  }, [router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Redirecting to admin panel...</p>
+        <p className="text-gray-600">Loading admin panel...</p>
       </div>
     </div>
   );

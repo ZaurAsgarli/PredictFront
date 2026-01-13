@@ -109,8 +109,10 @@ export default function Navbar() {
 
             {/* Admin Button - Only visible to admins */}
             {isAdmin && (
-              <Link
-                href="/admin"
+              <a
+                href="http://localhost:3001/dashboard"
+                target="_blank"
+                rel="noopener noreferrer"
                 className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:bg-purple-50 dark:hover:bg-purple-900/20 ${
                   scrolled 
                     ? 'text-white hover:text-gray-200 bg-purple-600/80 hover:bg-purple-600' 
@@ -119,7 +121,7 @@ export default function Navbar() {
               >
                 <Shield className="h-4 w-4" />
                 <span>Admin</span>
-              </Link>
+              </a>
             )}
 
             {/* Theme Toggle */}
@@ -267,8 +269,10 @@ export default function Navbar() {
             </Link>
             {/* Admin Button for Mobile - Only visible to admins */}
             {isAdmin && (
-              <Link
-                href="/admin"
+              <a
+                href="http://localhost:3001/dashboard"
+                target="_blank"
+                rel="noopener noreferrer"
                 className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
                   scrolled
                     ? 'text-white hover:text-gray-200 hover:bg-gray-700/50'
@@ -278,7 +282,7 @@ export default function Navbar() {
               >
                 <Shield className="h-5 w-5" />
                 <span>Admin Dashboard</span>
-              </Link>
+              </a>
             )}
             {/* Theme Toggle for Mobile */}
             <div className={`border-t pt-4 mt-4 ${

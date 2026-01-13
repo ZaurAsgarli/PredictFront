@@ -43,11 +43,9 @@ html {
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      135deg,
+  background: linear-gradient(135deg,
       rgb(var(--background-start-rgb)) 0%,
-      rgb(var(--background-end-rgb)) 100%
-    );
+      rgb(var(--background-end-rgb)) 100%);
   min-height: 100vh;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -91,79 +89,95 @@ a {
 }
 
 /* Selection styles */
+/* Selection styles */
 ::selection {
-  background: rgb(var(--primary-rgb) / 0.2);
-  color: rgb(var(--foreground-rgb));
+  background: #2563eb;
+  /* blue-600 */
+  color: #ffffff;
+}
+
+::-moz-selection {
+  background: #2563eb;
+  /* blue-600 */
+  color: #ffffff;
 }
 
 @layer base {
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-weight: 700;
     line-height: 1.2;
     letter-spacing: -0.025em;
   }
-  
+
   h1 {
     font-size: 2.5rem;
     font-weight: 800;
   }
-  
+
   h2 {
     font-size: 2rem;
     font-weight: 700;
   }
-  
+
   h3 {
     font-size: 1.5rem;
     font-weight: 600;
   }
+
   :root {
     --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 10% 3.9%;
+    --radius: 0.5rem;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
   }
+
   .dark {
-    --background: 0 0% 3.9%;
+    --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
+    --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
+    --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
     --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -178,54 +192,54 @@ a {
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
   }
-  
+
   .glass-dark {
     background: rgba(15, 23, 42, 0.8);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
-  
+
   .card-hover {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
   .card-hover:hover {
     transform: translateY(-4px);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
-  
+
   .btn-primary {
     @apply bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/50;
   }
-  
+
   .btn-secondary {
     @apply bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-semibold py-3 px-6 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-500/50;
   }
-  
+
   .input-modern {
     @apply w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200;
   }
-  
+
   .gradient-text {
     @apply bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent;
   }
-  
+
   .animate-fade-in {
     animation: fadeIn 0.6s ease-out;
   }
-  
+
   .animate-slide-up {
     animation: slideUp 0.6s ease-out;
   }
-  
+
   .animate-bounce-in {
     animation: bounceIn 0.8s ease-out;
   }
-  
+
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
-  
+
   /* Swiper Custom Styles */
   .swiper-button-next,
   .swiper-button-prev {
@@ -237,19 +251,19 @@ a {
     border-radius: 50%;
     transition: all 0.3s ease;
   }
-  
+
   .swiper-button-next:hover,
   .swiper-button-prev:hover {
     background: rgba(255, 255, 255, 0.2);
     transform: scale(1.1);
   }
-  
+
   .swiper-button-next::after,
   .swiper-button-prev::after {
     font-size: 20px !important;
     font-weight: bold;
   }
-  
+
   .swiper-pagination-bullet {
     background: rgba(255, 255, 255, 0.5) !important;
     opacity: 1 !important;
@@ -257,7 +271,7 @@ a {
     height: 12px !important;
     transition: all 0.3s ease;
   }
-  
+
   .swiper-pagination-bullet-active {
     background: white !important;
     width: 32px !important;
@@ -269,11 +283,11 @@ a {
   .text-balance {
     text-wrap: balance;
   }
-  
+
   .perspective-1000 {
     perspective: 1000px;
   }
-  
+
   .transform-gpu {
     transform: translateZ(0);
   }
@@ -283,6 +297,7 @@ a {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -293,6 +308,7 @@ a {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -304,13 +320,16 @@ a {
     opacity: 0;
     transform: scale(0.3);
   }
+
   50% {
     opacity: 1;
     transform: scale(1.05);
   }
+
   70% {
     transform: scale(0.9);
   }
+
   100% {
     opacity: 1;
     transform: scale(1);
@@ -318,13 +337,13 @@ a {
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-20px);
   }
 }
-
-
-

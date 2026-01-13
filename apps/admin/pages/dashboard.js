@@ -23,7 +23,7 @@ export default function AdminDashboard() {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch all data in parallel
       const [markets, activeMarkets, trades, disputes, featured] = await Promise.all([
         adminApi.getMarkets().catch(() => ({ results: [] })),
@@ -37,12 +37,12 @@ export default function AdminDashboard() {
         totalMarkets: markets.results?.length || markets.length || 0,
         activeMarkets: activeMarkets.results?.length || activeMarkets.length || 0,
         totalTrades: trades.results?.length || trades.length || 0,
-        pendingDisputes: disputes.results?.filter(d => d.status === 'pending')?.length || 
-                        disputes.filter(d => d.status === 'pending')?.length || 0,
+        pendingDisputes: disputes.results?.filter(d => d.status === 'pending')?.length ||
+          disputes.filter(d => d.status === 'pending')?.length || 0,
         featuredMarkets: featured.results?.length || featured.length || 0,
       });
 
-      setFeaturedMarkets(featured.results || featured.slice(0, 5) || []);
+      setFeaturedMarkets(featured.results || (Array.isArray(featured) ? featured.slice(0, 5) : []));
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -99,7 +99,7 @@ export default function AdminDashboard() {
               View all →
             </Link>
           </div>
-          
+
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (

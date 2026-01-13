@@ -1,20 +1,9 @@
 // pages/index.js
-import { useEffect, useState, lazy, Suspense } from "react";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import EventCard from "../src/components/EventCard";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { eventsService } from "../src/services/events";
 import ImageSlider from "../src/components/sections/ImageSlider";
 import SEO from "../src/components/SEO";
-
-// Lazy load all sections for performance
-const Hero = lazy(() => import("../src/components/sections/Hero"));
-const About = lazy(() => import("../src/components/sections/About"));
-const Features = lazy(() => import("../src/components/sections/Features"));
-const ScrollShowcase = lazy(() => import("../src/components/sections/ScrollShowcase"));
-const Testimonials = lazy(() => import("../src/components/sections/Testimonials"));
-const FooterCTA = lazy(() => import("../src/components/sections/FooterCTA"));
-const FeaturedEvents = lazy(() => import("../src/components/sections/FeaturedEvents"));
 
 // Loading fallback component
 const SectionLoader = () => (
@@ -22,6 +11,29 @@ const SectionLoader = () => (
     <div className="w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full animate-spin" />
   </div>
 );
+
+// Lazy load all sections for performance using next/dynamic
+const Hero = dynamic(() => import("../src/components/sections/Hero"), {
+  loading: () => <SectionLoader />,
+});
+const About = dynamic(() => import("../src/components/sections/About"), {
+  loading: () => <SectionLoader />,
+});
+const Features = dynamic(() => import("../src/components/sections/Features"), {
+  loading: () => <SectionLoader />,
+});
+const ScrollShowcase = dynamic(() => import("../src/components/sections/ScrollShowcase"), {
+  loading: () => <SectionLoader />,
+});
+const Testimonials = dynamic(() => import("../src/components/sections/Testimonials"), {
+  loading: () => <SectionLoader />,
+});
+const FooterCTA = dynamic(() => import("../src/components/sections/FooterCTA"), {
+  loading: () => <SectionLoader />,
+});
+const FeaturedEvents = dynamic(() => import("../src/components/sections/FeaturedEvents"), {
+  loading: () => <SectionLoader />,
+});
 
 export default function HomePage() {
   const [activeMarkets, setActiveMarkets] = useState([]);
@@ -33,13 +45,13 @@ export default function HomePage() {
       try {
         setLoading(true);
         setError("");
-        
+
         console.log('API Base URL:', process.env.NEXT_PUBLIC_API_URL);
 
         // Try to get all events first (more reliable)
         const allEvents = await eventsService.getAllEvents();
         console.log('Fetched events:', allEvents);
-        
+
         // Filter active events - be more lenient with status matching
         const activeOnly = allEvents.filter((event) => {
           if (!event) return false;
@@ -68,7 +80,7 @@ export default function HomePage() {
   }, []);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://predicthub.com';
-  
+
   // Structured data for homepage
   const structuredData = {
     '@context': 'https://schema.org',
@@ -108,40 +120,26 @@ export default function HomePage() {
         {/* Image Slider - At the very top */}
         <ImageSlider />
 
-      {/* 3D Hero Section */}
-      <Suspense fallback={<SectionLoader />}>
+        {/* 3D Hero Section */}
         <Hero isAuthenticated={false} />
-      </Suspense>
 
-      {/* About Section */}
-      <Suspense fallback={<SectionLoader />}>
+        {/* About Section */}
         <About />
-      </Suspense>
 
-      {/* Features Section */}
-      <Suspense fallback={<SectionLoader />}>
+        {/* Features Section */}
         <Features />
-      </Suspense>
 
-      {/* Scroll Showcase Section (Trusted by thousands) */}
-      <Suspense fallback={<SectionLoader />}>
+        {/* Scroll Showcase Section (Trusted by thousands) */}
         <ScrollShowcase />
-      </Suspense>
 
-      {/* Featured Events Section */}
-      <Suspense fallback={<SectionLoader />}>
+        {/* Featured Events Section */}
         <FeaturedEvents />
-      </Suspense>
 
-      {/* Testimonials Section */}
-      <Suspense fallback={<SectionLoader />}>
+        {/* Testimonials Section */}
         <Testimonials />
-      </Suspense>
 
-      {/* Footer CTA Section */}
-      <Suspense fallback={<SectionLoader />}>
+        {/* Footer CTA Section */}
         <FooterCTA />
-      </Suspense>
       </div>
     </div>
   );
