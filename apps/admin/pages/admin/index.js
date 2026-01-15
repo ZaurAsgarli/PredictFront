@@ -861,6 +861,7 @@ export default function AdminDashboard() {
           onToggle={() => togglePanel('moneyFlow')}
           loading={loading.moneyFlow || loading.trades}
           error={errors.moneyFlow || errors.trades}
+          contentClassName="md:pb-[180px]"
         >
           <div className="space-y-6">
             <div>
@@ -1089,7 +1090,7 @@ export default function AdminDashboard() {
 
 // ========== REUSABLE COMPONENTS ==========
 
-function Panel({ id, title, icon: Icon, collapsed, onToggle, loading, error, children }) {
+function Panel({ id, title, icon: Icon, collapsed, onToggle, loading, error, children, contentClassName = '' }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
       <button
@@ -1108,7 +1109,7 @@ function Panel({ id, title, icon: Icon, collapsed, onToggle, loading, error, chi
       </button>
 
       {!collapsed && (
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+        <div className={`px-6 py-4 border-t border-gray-200 dark:border-gray-700 ${contentClassName}`.trim()}>
           {loading && (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
