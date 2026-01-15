@@ -1,52 +1,88 @@
+/**
+ * Admin Auth Guard Wrapper - Production Ready
+ * 
+ * Client-side authentication guard using /users/me/ endpoint
+ * Redirects to '/admin/login' if not authenticated or not admin
+ */
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { authService } from '../../../src/services/auth';
-import AdminLayoutWrapper from '../layouts/AdminLayoutWrapper';
 
-// Wrapper for AdminAuthGuard that uses admin app routes (without /admin prefix)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
 export default function AdminAuthGuardWrapper({ children }) {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Hydration safety
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     checkAuth();
-  }, [router.pathname]);
+  }, [router.pathname, mounted]);
 
+  /**
+   * Check authentication using /users/me/ endpoint
+   * - Verifies token exists and is valid
+   * - Checks if user has admin role (role === 'ADMIN')
+   * - Redirects to '/admin/login' if not authenticated or not admin
+   */
   const checkAuth = async () => {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      // No token, redirect to login
+      router.push('/admin/login');
+      return;
+    }
+
     try {
-      // Check if token exists
-      const token = authService.isAuthenticated();
-      if (!token) {
-        router.push('/login');
+      // Verify token using /users/me/ endpoint (NOT /api/verify)
+      const response = await fetch(`${API_BASE_URL}/users/me/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        // Invalid token, redirect to login
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        router.push('/admin/login');
         return;
       }
 
-      // Get user from localStorage
-      const user = authService.getCurrentUserSync();
-      
-      if (!user) {
-        router.push('/login');
-        return;
-      }
+      const user = await response.json();
 
-      // Check if user is staff/admin
-      if (user.is_staff !== true) {
+      // Check if user is admin (check role field - role !== 'ADMIN' means not admin)
+      if (!user || (user.role !== 'ADMIN' && !user.is_staff && !user.is_superuser)) {
+        // Not admin, show access denied
         setIsAuthorized(false);
         setLoading(false);
         return;
       }
 
+      // User is admin, allow access
       setIsAuthorized(true);
-    } catch (error) {
-      console.error('Auth check error:', error);
-      router.push('/login');
-    } finally {
       setLoading(false);
+    } catch (error) {
+      console.error('[AdminAuthGuard] Auth check error:', error);
+      // On error, redirect to login
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      router.push('/admin/login');
     }
   };
 
-  if (loading) {
+  // Don't render until mounted (prevents hydration errors)
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -67,10 +103,10 @@ export default function AdminAuthGuardWrapper({ children }) {
               You do not have administrator privileges to access this page.
             </p>
             <button
-              onClick={() => window.location.href = 'http://localhost:3000'}
+              onClick={() => router.push('/admin/login')}
               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             >
-              Return to User Site
+              Go to Login
             </button>
           </div>
         </div>
@@ -78,6 +114,5 @@ export default function AdminAuthGuardWrapper({ children }) {
     );
   }
 
-  return <AdminLayoutWrapper>{children}</AdminLayoutWrapper>;
+  return <>{children}</>;
 }
-

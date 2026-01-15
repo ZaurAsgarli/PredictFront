@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { TrendingUp, Plus, Search, Eye, Edit2 } from 'lucide-react';
+import { TrendingUp, Plus, Search, Eye, Edit2, X, CheckCircle, Pause, Play } from 'lucide-react';
 import AdminAuthGuardWrapper from '../components/AdminAuthGuardWrapper';
-import { adminApi } from '../../../src/admin/services/adminApi';
+import { adminApi } from '../lib/api';
 
 export default function MarketsPage() {
     const [markets, setMarkets] = useState([]);
@@ -16,13 +16,27 @@ export default function MarketsPage() {
     const loadMarkets = async () => {
         try {
             setLoading(true);
-            const response = await adminApi.getMarkets();
-            setMarkets(response.results || response || []);
+            // Fetch ALL markets using pagination
+            const allMarkets = await adminApi.getAllMarkets();
+            setMarkets(allMarkets);
         } catch (error) {
             console.error('Error loading markets:', error);
             setMarkets([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleResolveMarket = async (marketId, outcome) => {
+        if (!confirm(`Are you sure you want to resolve this market as ${outcome}?`)) return;
+        
+        try {
+            await adminApi.resolveMarket(marketId, outcome);
+            alert('Market resolved successfully');
+            loadMarkets(); // Reload to show updated status
+        } catch (error) {
+            console.error('Error resolving market:', error);
+            alert('Failed to resolve market: ' + (error.response?.data?.detail || error.message));
         }
     };
 
@@ -76,7 +90,9 @@ export default function MarketsPage() {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Liquidity</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Yes Price</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">No Price</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                                 </tr>
                             </thead>
@@ -97,21 +113,50 @@ export default function MarketsPage() {
                                                 {market.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-gray-500">{market.yes_price || 'N/A'}</td>
+                                        <td className="px-6 py-4 text-gray-900">
+                                            ${parseFloat(market.liquidity_pool || 0).toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-500">
+                                            {market.prices?.yes_price 
+                                              ? (parseFloat(market.prices.yes_price) * 100).toFixed(1) + '%'
+                                              : market.outcome_tokens?.find(t => t.outcome_type === 'YES')?.price
+                                              ? (parseFloat(market.outcome_tokens.find(t => t.outcome_type === 'YES').price) * 100).toFixed(1) + '%'
+                                              : 'N/A'}
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-500">
+                                            {market.prices?.no_price 
+                                              ? (parseFloat(market.prices.no_price) * 100).toFixed(1) + '%'
+                                              : market.outcome_tokens?.find(t => t.outcome_type === 'NO')?.price
+                                              ? (parseFloat(market.outcome_tokens.find(t => t.outcome_type === 'NO').price) * 100).toFixed(1) + '%'
+                                              : 'N/A'}
+                                        </td>
                                         <td className="px-6 py-4">
                                             <div className="flex gap-2">
                                                 <Link
                                                     href={`/markets/${market.id}`}
                                                     className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded"
+                                                    title="View Details"
                                                 >
                                                     <Eye size={16} />
                                                 </Link>
-                                                <Link
-                                                    href={`/markets/${market.id}/edit`}
-                                                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </Link>
+                                                {market.status === 'active' && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleResolveMarket(market.id, 'YES')}
+                                                            className="p-2 text-green-600 hover:bg-green-50 rounded"
+                                                            title="Resolve as YES"
+                                                        >
+                                                            <CheckCircle size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleResolveMarket(market.id, 'NO')}
+                                                            className="p-2 text-red-600 hover:bg-red-50 rounded"
+                                                            title="Resolve as NO"
+                                                        >
+                                                            <X size={16} />
+                                                        </button>
+                                                    </>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

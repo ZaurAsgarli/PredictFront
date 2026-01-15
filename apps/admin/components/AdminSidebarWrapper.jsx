@@ -1,3 +1,15 @@
+/**
+ * Admin Sidebar Wrapper - Production Ready
+ * 
+ * ROUTING & LOGIN FIXES:
+ * - Logout redirects to '/admin/login' consistently (fixed from '/login')
+ * - All navigation links use correct routes
+ * 
+ * PURPOSE:
+ * - Sidebar navigation for admin panel
+ * - Handles logout with proper redirect
+ */
+
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
@@ -7,28 +19,44 @@ import {
   ShoppingCart,
   AlertTriangle,
   BarChart3,
+  Shield,
   Menu,
   X,
   LogOut,
 } from 'lucide-react';
-import { authService } from '../../../src/services/auth';
 
-// Admin app routes (without /admin prefix)
+// Admin app routes
 const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
-  { icon: TrendingUp, label: 'Markets', href: '/markets' },
-  { icon: Users, label: 'Users', href: '/users' },
-  { icon: ShoppingCart, label: 'Trades', href: '/trades' },
-  { icon: AlertTriangle, label: 'Disputes', href: '/disputes' },
-  { icon: BarChart3, label: 'Analytics', href: '/analytics' },
+  { icon: LayoutDashboard, label: 'Dashboard', href: '/admin' },
+  { icon: TrendingUp, label: 'Markets', href: '/admin/markets' },
+  { icon: Users, label: 'Users', href: '/admin/users' },
+  { icon: ShoppingCart, label: 'Trades', href: '/admin/trades' },
+  { icon: AlertTriangle, label: 'Disputes', href: '/admin/disputes' },
+  { icon: Shield, label: 'Security & Health', href: '/admin/security' },
+  { icon: BarChart3, label: 'Analytics', href: '/admin/analytics' },
 ];
 
 export default function AdminSidebarWrapper({ isOpen, setIsOpen }) {
   const router = useRouter();
 
-  const handleLogout = () => {
-    authService.logout();
-    router.push('/login');
+  /**
+   * Handle logout
+   * - Calls logout API to clear cookie
+   * - Redirects to '/admin/login' (fixed from '/login')
+   */
+  const handleLogout = async () => {
+    try {
+      // Call logout API to clear cookie
+      await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('[AdminSidebar] Logout error:', error);
+    } finally {
+      // Always redirect to login
+      router.push('/admin/login');
+    }
   };
 
   return (
@@ -67,7 +95,7 @@ export default function AdminSidebarWrapper({ isOpen, setIsOpen }) {
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = router.pathname === item.href || 
-                  (item.href !== '/dashboard' && router.pathname.startsWith(item.href));
+                  (item.href !== '/admin' && router.pathname.startsWith(item.href));
                 
                 return (
                   <li key={item.href}>
@@ -103,4 +131,3 @@ export default function AdminSidebarWrapper({ isOpen, setIsOpen }) {
     </>
   );
 }
-

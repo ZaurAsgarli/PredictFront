@@ -22,12 +22,21 @@ export default function Predictions() {
   const user = authService.getCurrentUserSync();
 
   useEffect(() => {
-    if (!user) {
-      router.push('/login');
-      return;
+    let cancelled = false;
+
+    async function loadData() {
+      if (cancelled) return;
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      console.log(`[PredictionsPage] Fetching predictions ONCE for user ${user.id}`);
+      await loadPredictions();
     }
-    loadPredictions();
-  }, []);
+
+    loadData();
+    return () => { cancelled = true; };
+  }, [user?.id]); // Only depend on user.id, not the whole user object
 
   const loadPredictions = async () => {
     try {
@@ -48,6 +57,7 @@ export default function Predictions() {
           };
         }),
       ]);
+      // Note: cancellation check is in the calling useEffect
       setPredictions(Array.isArray(predictionsData) ? predictionsData : []);
       setStats(statsData);
     } catch (error) {

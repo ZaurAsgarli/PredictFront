@@ -41,12 +41,16 @@ export default function HomePage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchMarkets = async () => {
+      if (cancelled) return;
+
       try {
         setLoading(true);
         setError("");
 
-        console.log('API Base URL:', process.env.NEXT_PUBLIC_API_URL);
+        console.log('[HomePage] Fetching markets ONCE on mount');
 
         // Try to get all events first (more reliable)
         const allEvents = await eventsService.getAllEvents();
@@ -62,21 +66,28 @@ export default function HomePage() {
         });
 
         // If we have active events, use them; otherwise show all events (up to 6)
-        const marketsToShow = activeOnly.length > 0 ? activeOnly : allEvents;
-        setActiveMarkets(marketsToShow.slice(0, 6));
+        if (!cancelled) {
+          const marketsToShow = activeOnly.length > 0 ? activeOnly : allEvents;
+          setActiveMarkets(marketsToShow.slice(0, 6));
+        }
       } catch (err) {
-        console.error("Failed to load active markets:", err);
-        console.error("Error response:", err.response);
-        console.error("Error URL:", err.config?.url);
-        const errorMsg = err.response?.data?.detail || err.response?.data?.message || err.message || "Could not load active markets from backend.";
-        setError(errorMsg);
-        // Don't set markets to empty array on error - keep previous state if any
+        if (!cancelled) {
+          console.error("Failed to load active markets:", err);
+          console.error("Error response:", err.response);
+          console.error("Error URL:", err.config?.url);
+          const errorMsg = err.response?.data?.detail || err.response?.data?.message || err.message || "Could not load active markets from backend.";
+          setError(errorMsg);
+          // Don't set markets to empty array on error - keep previous state if any
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     fetchMarkets();
+    return () => { cancelled = true; };
   }, []);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://predicthub.com';

@@ -8,6 +8,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Head from 'next/head';
 
 // Dynamically import client-only components to avoid SSR hydration issues
 const Loader = dynamic(() => import('../src/components/Loader'), {
@@ -41,6 +42,9 @@ function CursorManager() {
 function MyApp({ Component, pageProps }) {
   return (
     <ThemeProvider>
+      <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </Head>
       <Loader variant="gradient-ring" />
       <CursorManager />
       <ToastContainer

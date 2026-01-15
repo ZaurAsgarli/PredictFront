@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Users, Search } from 'lucide-react';
+import { Users, Search, Ban, Shield, Eye } from 'lucide-react';
 import AdminAuthGuardWrapper from '../components/AdminAuthGuardWrapper';
-import { adminApi } from '../../../src/admin/services/adminApi';
+import { adminApi } from '../lib/api';
+import { renderAddress } from '../../../lib/utils/wallet';
 
 export default function UsersPage() {
     const [users, setUsers] = useState([]);
@@ -15,14 +16,21 @@ export default function UsersPage() {
     const loadUsers = async () => {
         try {
             setLoading(true);
-            const response = await adminApi.getUsers();
-            setUsers(response.results || response || []);
+            // Fetch ALL users using pagination
+            const allUsers = await adminApi.getAllUsers();
+            setUsers(allUsers);
         } catch (error) {
             console.error('Error loading users:', error);
             setUsers([]);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleBlockUser = async (userId, reason) => {
+        if (!confirm(`Are you sure you want to block user ${userId}?`)) return;
+        // TODO: Implement when backend endpoint is available
+        alert(`Block user ${userId} with reason: ${reason}\n\nNote: Backend endpoint not yet implemented`);
     };
 
     const filteredUsers = Array.isArray(users)
@@ -65,9 +73,12 @@ export default function UsersPage() {
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Balance</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Trades</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Wallet (Admin)</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Points</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Volume</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -82,10 +93,55 @@ export default function UsersPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-gray-500">{user.email || 'N/A'}</td>
-                                        <td className="px-6 py-4 text-gray-900">${user.balance || user.total_balance || 0}</td>
-                                        <td className="px-6 py-4 text-gray-500">{user.total_trades || user.trades_count || 0}</td>
-                                        <td className="px-6 py-4 text-gray-500">
-                                            {user.date_joined ? new Date(user.date_joined).toLocaleDateString() : 'N/A'}
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-1 text-xs rounded-full ${
+                                                user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' :
+                                                user.role === 'WHALE' ? 'bg-blue-100 text-blue-800' :
+                                                user.role === 'BLOCKED' ? 'bg-red-100 text-red-800' :
+                                                'bg-gray-100 text-gray-800'
+                                            }`}>
+                                                {user.role || 'TRADER'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-1 text-xs rounded-full ${
+                                                user.role === 'BLOCKED' ? 'bg-red-100 text-red-800' :
+                                                'bg-green-100 text-green-800'
+                                            }`}>
+                                                {user.role === 'BLOCKED' ? 'Blocked' : 'Active'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div>
+                                                <p className="text-xs text-gray-500 mb-1">Wallet Address (Admin Only)</p>
+                                                <p className="text-gray-900 font-mono text-xs">
+                                                    {user.wallet_address ? renderAddress(user.wallet_address, 'admin') : 'Not connected'}
+                                                </p>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-900 font-medium">
+                                            {parseFloat(user.total_points || 0).toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-900">
+                                            ${parseFloat(user.total_volume || 0).toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleBlockUser(user.id || user.user_id, 'Admin action')}
+                                                    className="p-2 text-red-600 hover:bg-red-50 rounded"
+                                                    title="Block User"
+                                                >
+                                                    <Ban size={16} />
+                                                </button>
+                                                <Link
+                                                    href={`/users/${user.id || user.user_id}`}
+                                                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded"
+                                                    title="View Details"
+                                                >
+                                                    <Eye size={16} />
+                                                </Link>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

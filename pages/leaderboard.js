@@ -14,26 +14,62 @@ export default function Leaderboard() {
   const user = authService.getCurrentUserSync();
 
   useEffect(() => {
-    loadLeaderboard();
-  }, [timeframe]);
+    let cancelled = false;
+
+    async function loadData() {
+      if (cancelled) return;
+      console.log(`[Leaderboard] Fetching leaderboard ONCE for timeframe: ${timeframe}`);
+      await loadLeaderboard();
+    }
+
+    loadData();
+    return () => { cancelled = true; };
+  }, [timeframe]); // timeframe is a primitive string, safe to use
 
   const loadLeaderboard = async () => {
     setLoading(true);
     try {
       let data;
+      let requestUrl = '';
+      
       switch (timeframe) {
         case 'weekly':
+          console.log('[Leaderboard] Request: GET /api/analytics/weekly/ (last 7 days)');
           data = await leaderboardService.getWeeklyLeaderboard();
+          requestUrl = '/api/analytics/weekly/';
           break;
         case 'monthly':
+          console.log('[Leaderboard] Request: GET /api/analytics/monthly/ (last 30 days)');
           data = await leaderboardService.getMonthlyLeaderboard();
+          requestUrl = '/api/analytics/monthly/';
           break;
+        case 'all':
         default:
+          // All-Time: NO date filters, fetch ALL historical data
+          console.log('[Leaderboard] Request: GET /api/analytics/global/ (ALL-TIME, NO date filters)');
           data = await leaderboardService.getGlobalLeaderboard();
+          requestUrl = '/api/analytics/global/';
+          break;
       }
-      setLeaders(data);
+      
+      console.log(`[Leaderboard] Response for ${timeframe}:`, {
+        requestUrl,
+        dataLength: Array.isArray(data) ? data.length : 'not array',
+        firstUser: Array.isArray(data) && data.length > 0 ? {
+          username: data[0].username || data[0].user?.username,
+          total_points: data[0].total_points,
+          rank: data[0].rank
+        } : null
+      });
+      
+      setLeaders(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error loading leaderboard:', error);
+      console.error(`[Leaderboard] Error loading ${timeframe} leaderboard:`, {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      setLeaders([]); // Set empty array instead of undefined
     } finally {
       setLoading(false);
     }

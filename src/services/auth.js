@@ -64,6 +64,17 @@ export const authService = {
     }
   },
 
+  // Update user profile
+  updateProfile: async (data) => {
+    const response = await api.patch('/users/me/', data);
+    const userData = response.data;
+    if (userData && typeof window !== 'undefined') {
+      localStorage.setItem('user', JSON.stringify(userData));
+    }
+    return userData;
+  },
+
+
   // Get current user from cache (synchronous)
   getCurrentUserSync: () => {
     if (typeof window === 'undefined') return null;

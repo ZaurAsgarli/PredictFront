@@ -1,12 +1,11 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Shield, LogOut, Activity, TrendingUp, Users, AlertTriangle, FileText, Gauge } from "lucide-react";
-import { authService } from "@/src/services/auth";
-import AdminHeader from "@/components/admin/AdminHeader";
+import { useRequireAdmin } from "@/lib/hooks/useRBAC";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -15,12 +14,26 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [user] = useState<any>({ username: "Admin", is_staff: true });
+  const { user, loading: authLoading, isAdmin } = useRequireAdmin();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  // Don't render anything until auth check completes
+  if (authLoading || !isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Verifying admin access...</p>
+        </div>
+      </div>
+    );
+  }
+
   const handleLogout = () => {
-    authService.logout();
-    router.push("/");
+    console.log('[AdminLayout] Logging out admin user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    router.push("/admin/login");
   }
 
   const navItems = [
@@ -61,7 +74,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.username || "Admin"}</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Super Admin</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                {user?.is_staff ? "Super Admin" : "Admin"}
+              </p>
             </div>
           </div>
         </div>

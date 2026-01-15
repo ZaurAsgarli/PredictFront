@@ -94,5 +94,11 @@
     "files": [
       "static/chunks/node_modules_react-three_fiber_dist_react-three-fiber_esm_js.js"
     ]
+  },
+  "src\\services\\leaderboard.js -> ./predictions": {
+    "id": "src\\services\\leaderboard.js -> ./predictions",
+    "files": [
+      "static/chunks/src_services_predictions_js.js"
+    ]
   }
 }

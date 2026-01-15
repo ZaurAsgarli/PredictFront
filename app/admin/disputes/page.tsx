@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { adminApi } from "@/src/admin/services/adminApi";
+// Removed adminApi import - using direct API calls
 import { fetcher } from "@/lib/api";
 import { TableSkeleton } from "@/components/admin/SkeletonLoader";
 import { toast } from "sonner";
@@ -38,11 +38,19 @@ export default function DisputesManagement() {
 
     setActionLoading({ ...actionLoading, [disputeId]: true });
     try {
-      await adminApi.resolveDispute(disputeId, action);
+      // Use correct backend endpoint: /api/disputes/{id}/accept/ or /api/disputes/{id}/reject/
+      const api = (await import("@/lib/api")).default;
+      const endpoint = action === "approve" ? "accept" : "reject";
+      await api.post(`/disputes/${disputeId}/${endpoint}/`);
       toast.success(`Dispute ${action}d successfully`);
       mutate();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || `Error ${action}ing dispute`);
+      const errorMsg = error.response?.data?.detail || 
+                      error.response?.data?.message || 
+                      error.message || 
+                      `Error ${action}ing dispute`;
+      toast.error(errorMsg);
+      console.error(`Failed to ${action} dispute:`, error);
     } finally {
       setActionLoading({ ...actionLoading, [disputeId]: false });
     }

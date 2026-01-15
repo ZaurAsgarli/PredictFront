@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { api, apiEndpoints, fetcher } from "@/lib/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import MarketTradeChart from "@/components/MarketTradeChart";
 
 export default function EventPage() {
   const params = useParams();
@@ -25,39 +25,21 @@ export default function EventPage() {
   const [tradeType, setTradeType] = useState<"buy" | "sell">("buy");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch event data
+  // Fetch event data - ONE TIME ONLY, no polling
   const { data: event, error: eventError, isLoading: eventLoading } = useSWR(
     eventId ? apiEndpoints.marketById(eventId) : null,
     fetcher,
-    { refreshInterval: 5000 }
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
   );
 
-  // Fetch holders data
+  // Fetch holders data - ONE TIME ONLY, no polling
   const { data: holders, error: holdersError } = useSWR(
     eventId ? apiEndpoints.holders(eventId) : null,
     fetcher,
-    { refreshInterval: 10000 }
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
   );
 
-  // Generate mock price history data
-  const [priceHistory, setPriceHistory] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (event) {
-      const history = [];
-      const basePrice = event.yes_price || 0.5;
-      for (let i = 30; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const price = basePrice + (Math.random() - 0.5) * 0.2;
-        history.push({
-          date: date.toLocaleDateString(),
-          price: Math.max(0, Math.min(1, price)),
-        });
-      }
-      setPriceHistory(history);
-    }
-  }, [event]);
+  const [selectedOutcome, setSelectedOutcome] = useState<'YES' | 'NO'>('YES');
 
   const handleTrade = async () => {
     const userId = localStorage.getItem("userId");
@@ -168,42 +150,40 @@ export default function EventPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* LEFT COL - Data & History */}
           <div className="space-y-6">
-            {/* Price History Graph */}
+            {/* Trade Price Chart */}
             <Card>
               <CardHeader>
-                <CardTitle>Price History</CardTitle>
-                <CardDescription>Token price over time</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Trade Price History</CardTitle>
+                    <CardDescription>Historical trade prices for this market</CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={selectedOutcome === 'YES' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedOutcome('YES')}
+                      className={selectedOutcome === 'YES' ? 'bg-green-600 hover:bg-green-700' : ''}
+                    >
+                      YES
+                    </Button>
+                    <Button
+                      variant={selectedOutcome === 'NO' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedOutcome('NO')}
+                      className={selectedOutcome === 'NO' ? 'bg-red-600 hover:bg-red-700' : ''}
+                    >
+                      NO
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={priceHistory}>
-                    <defs>
-                      <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="date" stroke="#9ca3af" />
-                    <YAxis domain={[0, 1]} stroke="#9ca3af" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1f2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '8px',
-                        color: '#f3f4f6'
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="price"
-                      stroke="#22c55e"
-                      strokeWidth={2}
-                      fillOpacity={1}
-                      fill="url(#colorPrice)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <MarketTradeChart 
+                  marketId={eventId} 
+                  selectedOutcome={selectedOutcome}
+                  height={300}
+                />
               </CardContent>
             </Card>
 
@@ -231,8 +211,8 @@ export default function EventPage() {
                     <TableBody>
                       {holders.slice(0, 10).map((holder: any, index: number) => (
                         <TableRow key={holder.user_id || holder.id || `holder-${index}`}>
-                          <TableCell className="font-mono text-sm">
-                            {holder.user_id?.substring(0, 8)}...
+                          <TableCell className="text-sm">
+                            {holder.username || `User ${index + 1}`}
                           </TableCell>
                           <TableCell>
                             <span className={holder.outcome === 'yes' ? 'text-green-500' : 'text-red-500'}>

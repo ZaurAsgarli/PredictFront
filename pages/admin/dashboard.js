@@ -22,7 +22,16 @@ export default function AdminDashboard() {
   const [recentMarkets, setRecentMarkets] = useState([]);
 
   useEffect(() => {
-    loadDashboardData();
+    let cancelled = false;
+
+    async function loadData() {
+      if (cancelled) return;
+      console.log('[AdminDashboard] Fetching admin data ONCE on mount');
+      await loadDashboardData();
+    }
+
+    loadData();
+    return () => { cancelled = true; };
   }, []);
 
   const loadDashboardData = async () => {

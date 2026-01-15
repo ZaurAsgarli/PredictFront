@@ -1,15 +1,20 @@
 import api from './api';
+import { fetchAllFromPaginatedEndpoint } from '../../lib/utils/pagination';
 
 export const eventsService = {
-  // Get all events (markets)
+  // Get all events (markets) - fetches ALL pages
   getAllEvents: async (params = {}) => {
     try {
-      const response = await api.get('/markets/', { params });
-      // Backend returns paginated response with results array or array directly
-      const data = response.data.results || (Array.isArray(response.data) ? response.data : []);
-      
+      // Fetch all pages of markets
+      const allMarkets = await fetchAllFromPaginatedEndpoint(
+        api,
+        '/markets/',
+        params,
+        100 // page size
+      );
+
       // Transform market data to event format for frontend compatibility
-      return data.map(market => transformMarketToEvent(market));
+      return allMarkets.map(market => transformMarketToEvent(market));
     } catch (error) {
       console.error('Error fetching events:', error);
       throw error;
@@ -27,14 +32,17 @@ export const eventsService = {
     }
   },
 
-  // Get active events
+  // Get active events - fetches ALL active markets
   getActiveEvents: async () => {
     try {
-      const response = await api.get('/markets/', { 
-        params: { status: 'active' } 
-      });
-      const data = response.data.results || (Array.isArray(response.data) ? response.data : []);
-      return data.map(market => transformMarketToEvent(market));
+      // Fetch all pages of active markets
+      const allMarkets = await fetchAllFromPaginatedEndpoint(
+        api,
+        '/markets/',
+        { status: 'active' },
+        100
+      );
+      return allMarkets.map(market => transformMarketToEvent(market));
     } catch (error) {
       console.error('Error fetching active events:', error);
       throw error;
@@ -50,13 +58,15 @@ export const eventsService = {
         const data = Array.isArray(response.data) ? response.data : [];
         return data.map(market => transformMarketToEvent(market));
       } catch {
-        // Fallback to active events sorted by liquidity
-        const response = await api.get('/markets/', { 
-          params: { status: 'active' } 
-        });
-        const data = response.data.results || (Array.isArray(response.data) ? response.data : []);
+        // Fallback: fetch ALL active events, sort by liquidity, take top 10
+        const allActive = await fetchAllFromPaginatedEndpoint(
+          api,
+          '/markets/',
+          { status: 'active' },
+          100
+        );
         // Sort by liquidity_pool descending and take top 10
-        const sorted = data
+        const sorted = allActive
           .sort((a, b) => (b.liquidity_pool || 0) - (a.liquidity_pool || 0))
           .slice(0, 10);
         return sorted.map(market => transformMarketToEvent(market));
@@ -96,6 +106,31 @@ export const eventsService = {
       return [];
     }
   },
+
+  // Get price history for a market
+  getPriceHistory: async (id) => {
+    try {
+      const response = await api.get(`/markets/${id}/history/`);
+      return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+      console.error('Error fetching price history:', error);
+      return [];
+    }
+  },
+
+  // Get recent trades for a market
+  getRecentTrades: async (id) => {
+    try {
+      const response = await api.get('/trades/', {
+        params: { market: id, limit: 10 }
+      });
+      const data = response.data.results || (Array.isArray(response.data) ? response.data : []);
+      return data;
+    } catch (error) {
+      console.error('Error fetching recent trades:', error);
+      return [];
+    }
+  },
 };
 
 // Transform backend market format to frontend event format
@@ -104,7 +139,7 @@ function transformMarketToEvent(market) {
   // or prices from outcome_tokens
   let yesPrice = 0.5;
   let noPrice = 0.5;
-  
+
   if (market.prices) {
     yesPrice = parseFloat(market.prices.yes_price) || 0.5;
     noPrice = parseFloat(market.prices.no_price) || 0.5;
@@ -114,11 +149,11 @@ function transformMarketToEvent(market) {
     yesPrice = parseFloat(yesToken?.price) || 0.5;
     noPrice = parseFloat(noToken?.price) || 0.5;
   }
-  
+
   // Calculate participants count from trades if not provided
   // This is a fallback - backend should provide this
   const participantsCount = market.participants_count || 0;
-  
+
   return {
     id: market.id,
     title: market.title || market.name || 'Untitled Market',

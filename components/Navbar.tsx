@@ -9,6 +9,7 @@ import { useTheme } from "@/src/contexts/ThemeContext";
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { theme, toggleTheme } = useTheme();
@@ -18,10 +19,18 @@ export default function Navbar() {
     setMounted(true);
     if (typeof window !== "undefined") {
       // Check localStorage for user
-      const userId = localStorage.getItem("userId");
       const token = localStorage.getItem("token");
-      if (userId && token) {
-        setUser({ id: userId, username: userId.substring(0, 8) });
+      const userStr = localStorage.getItem("user");
+      if (token && userStr) {
+        try {
+          const parsed = JSON.parse(userStr);
+          setUser(parsed);
+          setIsAdmin(parsed?.role === "ADMIN");
+        } catch {
+          // Fallback: best-effort
+          setUser({ username: "User" });
+          setIsAdmin(false);
+        }
       }
 
       const handleScroll = () => {
@@ -36,8 +45,14 @@ export default function Navbar() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
+    localStorage.removeItem("user");
     setUser(null);
+    setIsAdmin(false);
     window.location.href = "/login";
+  };
+
+  const handleAdminClick = () => {
+    window.location.href = "http://localhost:3001/admin";
   };
 
   const handleConnectWallet = () => {
@@ -110,18 +125,19 @@ export default function Navbar() {
             >
               Markets
             </Link>
-            {user && (
-              <Link
-                href="/admin"
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={handleAdminClick}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:bg-primary-50 dark:hover:bg-primary-900/20 flex items-center gap-2 ${
                   scrolled
                     ? "text-white hover:text-gray-200"
                     : "text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400"
-                } ${pathname === "/admin" ? "bg-primary-50 dark:bg-primary-900/20" : ""}`}
+                }`}
               >
                 <Shield className="h-4 w-4" />
                 Admin
-              </Link>
+              </button>
             )}
 
             {/* Theme Toggle */}
@@ -227,19 +243,22 @@ export default function Navbar() {
             >
               Markets
             </Link>
-            {user && (
-              <Link
-                href="/admin"
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  handleAdminClick();
+                  setIsOpen(false);
+                }}
                 className={`block px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 flex items-center gap-2 ${
                   scrolled
                     ? "text-white hover:text-gray-200 hover:bg-gray-700/50"
                     : "text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
                 }`}
-                onClick={() => setIsOpen(false)}
               >
                 <Shield className="h-4 w-4" />
                 Admin
-              </Link>
+              </button>
             )}
 
             {user ? (

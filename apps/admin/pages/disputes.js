@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AlertTriangle, Search, CheckCircle, XCircle } from 'lucide-react';
 import AdminAuthGuardWrapper from '../components/AdminAuthGuardWrapper';
-import { adminApi } from '../../../src/admin/services/adminApi';
+import { adminApi } from '../lib/api';
 
 export default function DisputesPage() {
     const [disputes, setDisputes] = useState([]);
@@ -15,8 +15,9 @@ export default function DisputesPage() {
     const loadDisputes = async () => {
         try {
             setLoading(true);
-            const response = await adminApi.getDisputes();
-            setDisputes(response.results || response || []);
+            // Fetch ALL disputes using pagination
+            const allDisputes = await adminApi.getAllDisputes();
+            setDisputes(allDisputes);
         } catch (error) {
             console.error('Error loading disputes:', error);
             setDisputes([]);
@@ -26,11 +27,19 @@ export default function DisputesPage() {
     };
 
     const handleResolve = async (id, action) => {
+        if (!confirm(`Are you sure you want to ${action} this dispute?`)) return;
+        
         try {
-            await adminApi.resolveDispute(id, action);
-            loadDisputes();
+            if (action === 'approve') {
+                await adminApi.acceptDispute(id);
+            } else {
+                await adminApi.rejectDispute(id);
+            }
+            alert(`Dispute ${action}d successfully`);
+            loadDisputes(); // Reload to show updated state
         } catch (error) {
             console.error('Error resolving dispute:', error);
+            alert('Failed to resolve dispute: ' + (error.response?.data?.detail || error.message));
         }
     };
 

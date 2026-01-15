@@ -1,39 +1,114 @@
 import api from './api';
+import { fetchAllFromPaginatedEndpoint } from '../../lib/utils/pagination';
 
 export const leaderboardService = {
-  // Get global leaderboard
+  // Get global leaderboard (All-Time - SAME aggregation as weekly/monthly, NO DATE FILTER)
   getGlobalLeaderboard: async (params = {}) => {
     try {
-      const response = await api.get('/analytics/global/');
-      // Backend now returns actual array of users
-      const data = response.data;
-
-      // Handle array response (new backend) or fallback message (old backend)
-      if (Array.isArray(data) && data.length > 0) {
-        return data;
+      // All-Time: Use SAME aggregation logic as weekly/monthly, just without date filter
+      // Step 1: Fetch ALL trades (no date filter) - same source as weekly/monthly
+      console.log('[LeaderboardService] Fetching All-Time leaderboard - fetching ALL trades (no date filter)');
+      
+      const allTrades = await fetchAllFromPaginatedEndpoint(
+        api,
+        '/trades/',
+        {}, // NO date filters - this is the ONLY difference from weekly/monthly
+        1000 // Large page size for efficiency
+      );
+      
+      console.log(`[LeaderboardService] All-time trades count: ${allTrades.length}`);
+      
+      // Step 2: Aggregate trades by user (SAME logic as weekly/monthly)
+      // Weekly/Monthly: Trade.objects.values('user').annotate(volume=Sum('amount_staked'), count=Count('id'))
+      const userAggregates = {};
+      
+      allTrades.forEach(trade => {
+        const userId = trade.user || trade.user_id;
+        if (!userId) return;
+        
+        if (!userAggregates[userId]) {
+          userAggregates[userId] = {
+            user_id: userId,
+            total_volume: 0,
+            trade_count: 0,
+            user: null // Will fetch user details
+          };
+        }
+        
+        // Sum volume (same as weekly_volume/monthly_volume)
+        const amount = parseFloat(trade.amount_staked || trade.amount || 0);
+        userAggregates[userId].total_volume += amount;
+        userAggregates[userId].trade_count += 1;
+      });
+      
+      // Step 3: Sort by volume descending (SAME as weekly/monthly order_by('-weekly_volume'))
+      const sortedUsers = Object.values(userAggregates)
+        .sort((a, b) => b.total_volume - a.total_volume)
+        .slice(0, 50); // Top 50 (same limit as weekly/monthly)
+      
+      // Step 4: Fetch user details (same as weekly/monthly backend does)
+      // Backend: users_map = {u.id: u for u in User.objects.filter(id__in=user_ids)}
+      // Frontend: Fetch users in parallel for top 50
+      if (sortedUsers.length === 0) {
+        console.log('[LeaderboardService] All-time leaderboard: No trades found');
+        return [];
       }
-
-      // If backend returns empty array, that's valid - return it
-      if (Array.isArray(data)) {
-        return data;
-      }
-
-      // Only use mock if backend returns a "not implemented" message
-      if (data.message && data.message.includes('not implemented')) {
-        return generateMockLeaderboard('global');
-      }
-
-      return data.results || [];
+      
+      const userIds = sortedUsers.map(u => u.user_id);
+      const userPromises = userIds.map(userId => 
+        api.get(`/users/${userId}/`).catch(() => ({ data: null }))
+      );
+      const userResponses = await Promise.all(userPromises);
+      const userMap = {};
+      userResponses.forEach((response, index) => {
+        if (response.data) {
+          userMap[userIds[index]] = response.data;
+        }
+      });
+      
+      // Step 5: Build leaderboard response (SAME structure as weekly/monthly)
+      // Weekly/Monthly return: rank, user_id, username, total_points, weekly_volume/monthly_volume, trade_count, win_rate, wallet_address
+      const leaderboard = sortedUsers.map((aggregate, index) => {
+        const user = userMap[aggregate.user_id] || {};
+        
+        return {
+          rank: index + 1,
+          user_id: aggregate.user_id,
+          username: user.username || `User ${aggregate.user_id}`,
+          total_points: parseFloat(user.total_points || 0),
+          all_time_volume: aggregate.total_volume, // Same as weekly_volume/monthly_volume (for consistency)
+          trade_count: aggregate.trade_count, // Same as weekly/monthly
+          total_predictions: aggregate.trade_count, // UI expects this field
+          win_rate: parseFloat(user.win_rate || 0),
+          current_streak: user.streak || user.current_streak || 0, // UI expects this field
+          wallet_address: user.wallet_address || null,
+        };
+      });
+      
+      console.log(`[LeaderboardService] All-time leaderboard: ${leaderboard.length} users, top volume: ${leaderboard[0]?.all_time_volume || 0}`);
+      return leaderboard;
+      
     } catch (error) {
-      console.error('Error fetching global leaderboard:', error);
-      return generateMockLeaderboard('global');
+      console.error('[LeaderboardService] Error computing All-Time leaderboard:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        url: error.config?.url
+      });
+      return [];
     }
   },
 
-  // Get weekly leaderboard
+  // Get weekly leaderboard (last 7 days)
   getWeeklyLeaderboard: async () => {
     try {
+      console.log('[LeaderboardService] Fetching Weekly leaderboard - last 7 days');
       const response = await api.get('/analytics/weekly/');
+      console.log('[LeaderboardService] Weekly response:', {
+        url: response.config.url,
+        status: response.status,
+        dataLength: Array.isArray(response.data) ? response.data.length : 'not array'
+      });
       const data = response.data;
 
       if (Array.isArray(data)) {
@@ -49,10 +124,16 @@ export const leaderboardService = {
     }
   },
 
-  // Get monthly leaderboard
+  // Get monthly leaderboard (last 30 days)
   getMonthlyLeaderboard: async () => {
     try {
+      console.log('[LeaderboardService] Fetching Monthly leaderboard - last 30 days');
       const response = await api.get('/analytics/monthly/');
+      console.log('[LeaderboardService] Monthly response:', {
+        url: response.config.url,
+        status: response.status,
+        dataLength: Array.isArray(response.data) ? response.data.length : 'not array'
+      });
       const data = response.data;
 
       if (Array.isArray(data)) {

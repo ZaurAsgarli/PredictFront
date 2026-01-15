@@ -1,243 +1,44 @@
-# PredictHub - Community Prediction Market
+# PredictBack Protocol
 
-A modern, responsive Next.js frontend for a community prediction market platform where users can predict outcomes of events and earn rewards.
+## Project overview
 
-## 🚀 Features
+PredictBack Protocol is a hybrid Decentralized Prediction Market (DPM) designed to bridge the performance and ergonomics of Web2 execution with the auditability and settlement guarantees of Web3 systems.
 
-- **Event Browsing**: Explore upcoming events across various categories
-- **Smart Predictions**: Make predictions with confidence levels and stakes
-- **Leaderboard**: Compete with other users and track your ranking
-- **User Profiles**: View detailed statistics and prediction history
-- **Real-time Updates**: Track predictions and event outcomes
-- **Responsive Design**: Beautiful UI that works on all devices
-- **Dark Mode Support**: Automatic dark/light theme switching
+At a business level, the protocol’s value proposition is:
 
-## 🛠 Tech Stack
+- **Truth aggregation at scale**: markets route diverse opinions into probabilistic price signals.
+- **AI-secured trading**: risk scoring and anomaly detection reduce manipulation and abuse.
+- **On-chain fidelity**: settlements and event trails preserve verifiability (with optional simulation for local development).
 
-- **Framework**: Next.js 14
-- **Routing**: React Router DOM v6
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
-- **HTTP Client**: Axios
-- **Date Handling**: date-fns
+## The three-port ecosystem
 
-## 📋 Prerequisites
+The system is intentionally decomposed into three runtime surfaces with distinct responsibilities and security boundaries:
 
-Before running this project, make sure you have:
+- **Port 8000 — Django REST Engine (Source of Truth & AI Scoring)**  
+  The canonical authority for identities, markets, trades, analytics, and security telemetry. It enforces authorization and preserves audit trails.
 
-- Node.js 18+ installed
-- npm or yarn package manager
-- Django backend API running (see Backend Setup section)
+- **Port 3000 — User Execution Environment (Trading & Social UI)**  
+  The user-facing interface for discovery, analysis, and trade execution. It is a presentation layer: it requests data and submits intents, but does not define truth.
 
-## 🏃‍♂️ Getting Started
+- **Port 3001 — Admin Intelligence Dashboard (Security & Oversight)**  
+  An oversight surface for operational control: disputes, user status transitions, security telemetry, and ML-driven signals. It is not a “different backend”; it is a different view over the same backend.
 
-### 1. Install Dependencies
+## Core philosophies
 
-```bash
-npm install
-```
+- **Backend as the source of truth**: the frontend never “guesses” authoritative values.
+- **Role-based access control (RBAC)**: administrative visibility is a permissioned lens over shared endpoints, not a separate API universe.
+- **Observability by design**: security events, ML detections, and admin actions must be traceable and reviewable.
+- **Integrity over convenience**: stability mechanisms (deduplication, request governors, safe fallbacks) exist to protect correctness and system health.
 
-### 2. Configure Environment Variables
+## End-to-end system flow (high level)
 
-Create a `.env.local` file in the root directory:
+- **Market lifecycle**: market creation → liquidity/participation → price evolution → resolution → settlement/audit.
+- **Trade lifecycle**: client intent → backend validation → position/trade recording → analytics updates → ML/security evaluation.
+- **Oversight lifecycle**: anomaly detection → alert surfaced → admin review → action (block/unblock, accept/reject dispute) → audit log.
 
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
-```
+## Documentation map
 
-Replace `http://localhost:8000/api` with your Django backend API URL.
-
-### 3. Run Development Server
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### 4. Build for Production
-
-```bash
-npm run build
-npm start
-```
-
-## 📁 Project Structure
-
-```
-├── pages/
-│   ├── _app.js              # Next.js app wrapper with router
-│   └── _document.js         # HTML document structure
-├── src/
-│   ├── components/          # Reusable UI components
-│   │   ├── Layout.jsx       # Main layout with navbar and footer
-│   │   ├── Navbar.jsx       # Navigation bar
-│   │   ├── Footer.jsx       # Footer component
-│   │   ├── EventCard.jsx    # Event display card
-│   │   ├── PredictionForm.jsx    # Prediction submission form
-│   │   ├── PredictionCard.jsx    # Prediction display card
-│   │   └── LeaderboardTable.jsx  # Leaderboard table
-│   ├── pages/               # Page components
-│   │   ├── Home.jsx         # Landing page
-│   │   ├── Events.jsx       # Events listing page
-│   │   ├── EventDetail.jsx  # Single event detail page
-│   │   ├── Predictions.jsx  # User predictions page
-│   │   ├── Profile.jsx      # User profile page
-│   │   ├── Leaderboard.jsx  # Global leaderboard page
-│   │   ├── Login.jsx        # Login page
-│   │   └── Signup.jsx       # Signup page
-│   ├── services/            # API service layer
-│   │   ├── api.js           # Axios instance and interceptors
-│   │   ├── auth.js          # Authentication services
-│   │   ├── events.js        # Events API calls
-│   │   ├── predictions.js   # Predictions API calls
-│   │   └── leaderboard.js   # Leaderboard API calls
-│   ├── routes.jsx           # React Router configuration
-│   └── styles/
-│       └── globals.css      # Global styles and Tailwind imports
-├── next.config.js           # Next.js configuration
-├── tailwind.config.js       # Tailwind CSS configuration
-└── package.json             # Dependencies and scripts
-```
-
-## 🔌 Backend Integration
-
-This frontend is integrated with the `predicthub_backend` Django REST API. See `INTEGRATION_GUIDE.md` for detailed information.
-
-### Authentication
-- `POST /api/users/login/` - User login
-- `POST /api/users/signup/` - User registration
-- `GET /api/users/me/` - Get current user
-
-### Markets (Events)
-- `GET /api/markets/` - Get all markets (supports filtering)
-- `GET /api/markets/:id/` - Get market details
-- `POST /api/markets/create/` - Create a new market
-
-### Trades (Predictions)
-- `POST /api/trades/` - Create a trade/prediction
-- `GET /api/users/me/trades/` - Get user's trades
-- `GET /api/trades/?market_id=:id` - Get trades for a market
-
-### Leaderboard
-- `GET /api/analytics/global/` - Global leaderboard
-- `GET /api/analytics/weekly/` - Weekly leaderboard
-- `GET /api/analytics/monthly/` - Monthly leaderboard
-- `PUT /api/predictions/:id/` - Update a prediction
-- `DELETE /api/predictions/:id/` - Delete a prediction
-- `GET /api/predictions/stats/:userId/` - Get user statistics
-
-### Leaderboard
-- `GET /api/leaderboard/` - Get global leaderboard
-- `GET /api/leaderboard/weekly/` - Get weekly leaderboard
-- `GET /api/leaderboard/monthly/` - Get monthly leaderboard
-- `GET /api/leaderboard/user/:userId/` - Get user rank
-
-## 📝 Expected Data Models
-
-### Event Object
-```json
-{
-  "id": 1,
-  "title": "Event Title",
-  "description": "Event description",
-  "category": "Sports",
-  "status": "active",
-  "image": "https://example.com/image.jpg",
-  "start_date": "2025-01-01T00:00:00Z",
-  "end_date": "2025-12-31T23:59:59Z",
-  "participants_count": 100,
-  "total_predictions": 250,
-  "options": [
-    {
-      "id": 1,
-      "name": "Option A",
-      "current_odds": "2.5"
-    }
-  ]
-}
-```
-
-### Prediction Object
-```json
-{
-  "id": 1,
-  "event": 1,
-  "event_title": "Event Title",
-  "outcome": 1,
-  "outcome_name": "Option A",
-  "confidence": 75,
-  "stake": 50,
-  "notes": "My reasoning...",
-  "status": "pending",
-  "reward": 125,
-  "created_at": "2025-01-01T00:00:00Z"
-}
-```
-
-### User Object
-```json
-{
-  "id": 1,
-  "username": "johndoe",
-  "email": "john@example.com",
-  "joined_date": "2025-01-01T00:00:00Z"
-}
-```
-
-## 🎨 Customization
-
-### Colors
-Edit `tailwind.config.js` to customize the primary color scheme:
-
-```js
-theme: {
-  extend: {
-    colors: {
-      primary: {
-        // Your custom colors
-      }
-    }
-  }
-}
-```
-
-### Branding
-- Update the logo and app name in `src/components/Navbar.jsx`
-- Modify the hero section in `src/pages/Home.jsx`
-- Change footer content in `src/components/Footer.jsx`
-
-## 🔐 Authentication
-
-The app uses JWT token-based authentication:
-- Tokens are stored in `localStorage`
-- Axios interceptors automatically attach tokens to requests
-- Users are redirected to login on 401 responses
-
-## 🚧 Future Enhancements
-
-- [ ] Real-time notifications
-- [ ] Social sharing features
-- [ ] Advanced filtering and search
-- [ ] Achievement system
-- [ ] User avatars and profiles
-- [ ] Activity timeline
-- [ ] Prediction analytics dashboard
-- [ ] Mobile app (React Native)
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📞 Support
-
-For support, email support@predicthub.com or open an issue in the repository.
-
----
-
-Built with ❤️ using Next.js and React
-
+- **Oversight layer**: `apps/admin/README.md`
+- **Trading interface**: `apps/frontend/README.md`
+- **Engine room (backend)**: see backend workspace `backend_api/README.md`
+- **Repository map**: `docs/PROJECT_MAP.md`

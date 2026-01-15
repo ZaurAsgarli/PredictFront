@@ -1,12 +1,13 @@
 "use client"
 
 import { useState } from "react";
-import { Wallet, Star, Trash2, Edit2, Copy, Check } from "lucide-react";
+import { Wallet, Star, Trash2, Edit2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { renderAddress } from "@/lib/utils/wallet";
 
 interface WalletCardProps {
   wallet: {
@@ -23,10 +24,10 @@ interface WalletCardProps {
 
 export default function WalletCard({ wallet, onUpdate, onSetPrimary }: WalletCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete wallet "${wallet.label || wallet.address}"?`)) {
+    const displayName = wallet.label || renderAddress(wallet.address, 'public');
+    if (!confirm(`Are you sure you want to delete wallet "${displayName}"?`)) {
       return;
     }
 
@@ -40,18 +41,6 @@ export default function WalletCard({ wallet, onUpdate, onSetPrimary }: WalletCar
     } finally {
       setIsDeleting(false);
     }
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(wallet.address);
-    setCopied(true);
-    toast.success("Address copied to clipboard");
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const formatAddress = (address: string) => {
-    if (address.length <= 12) return address;
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
   return (
@@ -81,19 +70,6 @@ export default function WalletCard({ wallet, onUpdate, onSetPrimary }: WalletCar
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleCopy}
-              className="h-8 w-8"
-              aria-label="Copy address"
-            >
-              {copied ? (
-                <Check className="h-4 w-4 text-green-500" />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
               onClick={() => onSetPrimary(wallet.id)}
               className="h-8 w-8"
               disabled={wallet.is_primary}
@@ -115,8 +91,8 @@ export default function WalletCard({ wallet, onUpdate, onSetPrimary }: WalletCar
             </Button>
           </div>
         </div>
-        <div className="bg-gray-900 rounded-lg p-3 font-mono text-sm text-gray-300 break-all">
-          {wallet.address}
+        <div className="bg-gray-900 rounded-lg p-3 font-mono text-sm text-gray-300">
+          {renderAddress(wallet.address, 'public')}
         </div>
         {wallet.created_at && (
           <p className="text-xs text-gray-500 mt-2">

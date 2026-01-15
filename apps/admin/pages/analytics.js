@@ -17,7 +17,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { adminApi } from '../../../src/admin/services/adminApi';
+import { adminApi } from '../lib/api';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -42,20 +42,21 @@ export default function Analytics() {
     try {
       setLoading(true);
       
-      const [markets, activeMarkets, trades, users] = await Promise.all([
-        adminApi.getMarkets().catch(() => ({ results: [] })),
-        adminApi.getMarkets({ status: 'active' }).catch(() => ({ results: [] })),
-        adminApi.getTrades().catch(() => ({ results: [] })),
-        adminApi.getUsers().catch(() => ({ results: [] })),
+      // Fetch ALL data using pagination (no truncation)
+      const [allMarkets, activeMarkets, allTrades, allUsers] = await Promise.all([
+        adminApi.getAllMarkets().catch(() => []),
+        adminApi.getAllMarkets({ status: 'active' }).catch(() => []),
+        adminApi.getAllTrades().catch(() => []),
+        adminApi.getAllUsers().catch(() => []),
       ]);
 
-      const marketsList = markets.results || markets || [];
-      const tradesList = trades.results || trades || [];
-      const usersList = users.results || users || [];
+      const marketsList = allMarkets;
+      const tradesList = allTrades;
+      const usersList = allUsers;
 
       setStats({
         totalMarkets: marketsList.length,
-        activeMarkets: activeMarkets.results?.length || activeMarkets.length || 0,
+        activeMarkets: activeMarkets.length,
         totalTrades: tradesList.length,
         totalUsers: usersList.length,
       });
@@ -72,10 +73,10 @@ export default function Analytics() {
         Object.entries(statusCounts).map(([name, value]) => ({ name, value }))
       );
 
-      // Category distribution
+      // Category distribution - handle both object and string categories
       const categoryCounts = {};
       marketsList.forEach((m) => {
-        const cat = m.category || 'Other';
+        const cat = typeof m.category === 'object' ? (m.category?.name || 'Other') : (m.category || 'Other');
         categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
       });
       setCategoryDistribution(
@@ -98,8 +99,8 @@ export default function Analytics() {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
       const dayTrades = trades.filter((t) => {
-        if (!t.timestamp) return false;
-        const tradeDate = new Date(t.timestamp);
+        const tradeDate = t.created_at ? new Date(t.created_at) : (t.timestamp ? new Date(t.timestamp) : null);
+        if (!tradeDate) return false;
         return tradeDate.toDateString() === date.toDateString();
       });
       days.push({

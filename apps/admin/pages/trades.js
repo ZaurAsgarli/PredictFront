@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Search } from 'lucide-react';
+import { ShoppingCart, Search, TrendingUp, TrendingDown } from 'lucide-react';
 import AdminAuthGuardWrapper from '../components/AdminAuthGuardWrapper';
-import { adminApi } from '../../../src/admin/services/adminApi';
+import { adminApi } from '../lib/api';
 
 export default function TradesPage() {
     const [trades, setTrades] = useState([]);
@@ -15,8 +15,9 @@ export default function TradesPage() {
     const loadTrades = async () => {
         try {
             setLoading(true);
-            const response = await adminApi.getTrades();
-            setTrades(response.results || response || []);
+            // Fetch ALL trades using pagination
+            const allTrades = await adminApi.getAllTrades();
+            setTrades(allTrades);
         } catch (error) {
             console.error('Error loading trades:', error);
             setTrades([]);
@@ -66,8 +67,11 @@ export default function TradesPage() {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Market</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Position</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Outcome</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount Staked</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tokens</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                                 </tr>
                             </thead>
@@ -76,18 +80,36 @@ export default function TradesPage() {
                                     <tr key={trade.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 text-gray-500">#{trade.id}</td>
                                         <td className="px-6 py-4 font-medium text-gray-900">{trade.market_title || (typeof trade.market === 'object' ? trade.market?.title : trade.market) || 'N/A'}</td>
-                                        <td className="px-6 py-4 text-gray-500">{trade.user_username || (typeof trade.user === 'object' ? trade.user?.username : trade.user) || 'N/A'}</td>
+                                        <td className="px-6 py-4 text-gray-500">
+                                            {typeof trade.user === 'object' ? trade.user?.username : trade.user_username || trade.user || 'N/A'}
+                                        </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 text-xs rounded-full ${trade.position === 'YES'
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
-                                                }`}>
-                                                {trade.position}
+                                            <span className={`px-2 py-1 text-xs rounded-full ${
+                                                trade.trade_type === 'buy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                            }`}>
+                                                {trade.trade_type?.toUpperCase() || 'N/A'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-gray-900">${trade.amount}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-1 text-xs rounded-full ${
+                                                trade.outcome_type === 'YES' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                            }`}>
+                                                {trade.outcome_type || 'N/A'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-900 font-medium">
+                                            ${parseFloat(trade.amount_staked || 0).toLocaleString()}
+                                        </td>
                                         <td className="px-6 py-4 text-gray-500">
-                                            {new Date(trade.created_at).toLocaleDateString()}
+                                            {parseFloat(trade.tokens_amount || 0).toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-500">
+                                            {trade.price_at_execution 
+                                              ? (parseFloat(trade.price_at_execution) * 100).toFixed(2) + '%'
+                                              : 'N/A'}
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-500 text-sm">
+                                            {new Date(trade.created_at).toLocaleString()}
                                         </td>
                                     </tr>
                                 ))}

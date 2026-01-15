@@ -17,13 +17,14 @@ export default function Events() {
   const [selectedStatus, setSelectedStatus] = useState('all');
 
   useEffect(() => {
-    loadData();
-  }, []);
+    let cancelled = false;
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      console.log('Events page - API Base URL:', process.env.NEXT_PUBLIC_API_URL);
+    async function loadData() {
+      if (cancelled) return;
+
+      try {
+        setLoading(true);
+        console.log('[EventsPage] Fetching data ONCE on mount');
       
       // Add minimum loading time to ensure skeleton is visible
       const minLoadTime = new Promise(resolve => setTimeout(resolve, 500));
@@ -41,21 +42,31 @@ export default function Events() {
         }),
       ]);
       
-      // Wait for minimum load time if data loaded faster
-      await minLoadTime;
-      
-      console.log('Events page - Fetched events:', eventsData);
-      console.log('Events page - Fetched categories:', categoriesData);
-      setEvents(Array.isArray(eventsData) ? eventsData : []);
-      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
-    } catch (error) {
-      console.error('Error loading data:', error);
-      setEvents([]);
-      setCategories([]);
-    } finally {
-      setLoading(false);
+        // Wait for minimum load time if data loaded faster
+        await minLoadTime;
+        
+        if (!cancelled) {
+          console.log('Events page - Fetched events:', eventsData);
+          console.log('Events page - Fetched categories:', categoriesData);
+          setEvents(Array.isArray(eventsData) ? eventsData : []);
+          setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Error loading data:', error);
+          setEvents([]);
+          setCategories([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
     }
-  };
+
+    loadData();
+    return () => { cancelled = true; };
+  }, []);
 
   const filteredEvents = events.filter((event) => {
     const matchesSearch = event.title

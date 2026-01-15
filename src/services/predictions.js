@@ -7,7 +7,7 @@ export const predictionsService = {
       // Map frontend prediction data to backend trade format
       // Backend expects: market_id, outcome_type ('YES' or 'NO'), trade_type ('buy' or 'sell'), amount_staked
       let outcomeType = predictionData.outcome_type;
-      
+
       // If outcome is provided as an option ID or name, try to map it
       if (predictionData.outcome && !outcomeType) {
         // If outcome is a string that contains 'YES' or 'NO', extract it
@@ -21,25 +21,25 @@ export const predictionsService = {
           outcomeType = 'YES';
         }
       }
-      
+
       // Ensure outcome_type is uppercase
       if (outcomeType) {
         outcomeType = outcomeType.toUpperCase();
       }
-      
+
       // Ensure market_id is a number
       const marketId = predictionData.market_id || predictionData.eventId || predictionData.event;
       if (!marketId) {
         throw new Error('Market ID is required');
       }
-      
+
       const tradeData = {
         market_id: typeof marketId === 'string' ? parseInt(marketId, 10) : marketId,
         outcome_type: outcomeType || 'YES', // Default to YES if not specified
         trade_type: (predictionData.trade_type || 'buy').toLowerCase(), // buy or sell (lowercase)
         amount_staked: parseFloat(predictionData.stake || predictionData.amount || predictionData.amount_staked || 10),
       };
-      
+
       // Validate required fields
       if (!tradeData.market_id || isNaN(tradeData.market_id)) {
         throw new Error('Invalid market ID');
@@ -53,7 +53,7 @@ export const predictionsService = {
       if (!tradeData.amount_staked || tradeData.amount_staked <= 0) {
         throw new Error('Amount must be greater than 0');
       }
-      
+
       console.log('Creating trade with data:', tradeData);
       const response = await api.post('/trades/', tradeData);
       // Backend returns {trade: {...}, position: {...}, price: {...}} or just trade
@@ -64,6 +64,51 @@ export const predictionsService = {
     } catch (error) {
       console.error('Error creating prediction:', error);
       throw error;
+    }
+  },
+
+  // Get user's positions (holdings)
+  getUserPositions: async () => {
+    try {
+      const response = await api.get('/users/me/positions/');
+      const responseData = response.data.success !== undefined ? response.data.data : response.data;
+      const positions = responseData.results || (Array.isArray(responseData) ? responseData : []);
+
+      // Map to frontend position format
+      return positions.map(pos => {
+        const market = pos.market || {};
+        const yesTokens = parseFloat(pos.yes_tokens) || 0;
+        const noTokens = parseFloat(pos.no_tokens) || 0;
+        const side = yesTokens > 0 ? 'YES' : (noTokens > 0 ? 'NO' : 'NONE');
+        const quantity = yesTokens || noTokens || 0;
+
+        // Calculate current value based on live market price
+        const currentPrice = side === 'YES'
+          ? parseFloat(market.prices?.yes_price || 0.5)
+          : parseFloat(market.prices?.no_price || 0.5);
+
+        const currentValue = quantity * currentPrice;
+        const avgPrice = parseFloat(pos.avg_price_at_purchase) || 0.5;
+        const pnl = currentValue - (quantity * avgPrice);
+        const pnlPercent = avgPrice > 0 ? (pnl / (quantity * avgPrice)) * 100 : 0;
+
+        return {
+          id: pos.id,
+          market_title: market.title || 'Unknown Market',
+          market_id: market.id,
+          side: side,
+          quantity: quantity,
+          avg_price: avgPrice,
+          current_price: currentPrice,
+          current_value: currentValue,
+          pnl: pnl,
+          pnl_percent: pnlPercent,
+          _market: market
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching user positions:', error);
+      return [];
     }
   },
 
@@ -119,11 +164,11 @@ export const predictionsService = {
       // Get user positions
       const response = await api.get('/users/me/positions/');
       const positions = response.data.results || (Array.isArray(response.data) ? response.data : []);
-      
+
       // Aggregate stats from positions and trades
       const tradesResponse = await api.get('/users/me/trades/');
       const trades = tradesResponse.data.results || (Array.isArray(tradesResponse.data) ? tradesResponse.data : []);
-      
+
       // Calculate stats
       const totalTrades = trades.length;
       const resolvedTrades = trades.filter(t => t.market?.status === 'resolved');
@@ -131,13 +176,13 @@ export const predictionsService = {
         const marketOutcome = t.market?.resolution_outcome;
         return marketOutcome && t.outcome_type === marketOutcome;
       });
-      const winRate = resolvedTrades.length > 0 
-        ? Math.round((wonTrades.length / resolvedTrades.length) * 100) 
+      const winRate = resolvedTrades.length > 0
+        ? Math.round((wonTrades.length / resolvedTrades.length) * 100)
         : 0;
-      
+
       // Calculate total points (sum of amount_staked from all trades)
       const totalPoints = trades.reduce((sum, t) => sum + (parseFloat(t.amount_staked) || 0), 0);
-      
+
       // Calculate current streak (simplified - count consecutive wins)
       let currentStreak = 0;
       for (let i = resolvedTrades.length - 1; i >= 0; i--) {
@@ -149,7 +194,7 @@ export const predictionsService = {
           break;
         }
       }
-      
+
       return {
         total: totalTrades,
         win_rate: winRate,
@@ -173,22 +218,22 @@ export const predictionsService = {
 // Transform backend trade format to frontend prediction format
 function transformTradeToPrediction(trade) {
   const market = trade.market || {};
-  const status = market.status === 'resolved' 
+  const status = market.status === 'resolved'
     ? (trade.outcome_type === market.resolution_outcome ? 'won' : 'lost')
     : 'pending';
-  
+
   // Calculate confidence from price_at_execution if available
   let confidence = 50;
   if (trade.price_at_execution) {
     confidence = Math.round(parseFloat(trade.price_at_execution) * 100);
   } else if (market.prices) {
     // Fallback to market prices
-    const price = trade.outcome_type === 'YES' 
+    const price = trade.outcome_type === 'YES'
       ? parseFloat(market.prices.yes_price || 0.5)
       : parseFloat(market.prices.no_price || 0.5);
     confidence = Math.round(price * 100);
   }
-  
+
   return {
     id: trade.id,
     event_title: market.title || 'Unknown Event',

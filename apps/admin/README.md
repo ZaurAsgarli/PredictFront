@@ -1,48 +1,44 @@
-# Admin Panel - Separate Application
+# PredictBack Protocol — Admin Intelligence Dashboard (Port 3001)
 
-This is a separate Next.js application for the admin panel, running on **port 3001**.
+## Purpose: the oversight layer
 
-## Setup
+The Admin Intelligence Dashboard is the protocol’s operational control plane. It provides administrators with a coherent, permissioned view of platform health, security posture, and market integrity—while remaining coupled to the canonical backend as the source of truth.
 
-1. Install dependencies:
-```bash
-cd apps/admin
-npm install
-```
+At a business level, this surface exists to:
 
-2. Run the admin app:
-```bash
-npm run dev
-```
+- **Protect market integrity**: detect anomalies, reduce manipulation, and preserve fair outcomes.
+- **Reduce operational latency**: surface risks early and enable rapid intervention.
+- **Maintain auditability**: ensure actions (blocks, dispute resolutions) are traceable and reviewable.
 
-The admin panel will be available at: **http://localhost:3001**
+## System monitoring (signals and telemetry)
 
-## Running Both Apps
+The dashboard is organized around “signals” that describe whether the protocol is healthy:
 
-To run both the user app (port 3000) and admin app (port 3001) simultaneously:
+- **ML insights**: model-derived signals describing risk, manipulation likelihood, and behavioral anomalies.
+- **Security logs**: authentication and access events, suspicious activity traces, and administrative actions.
+- **System health**: summarized service state for operational confidence during incident response.
 
-### Option 1: Using npm scripts (from root)
-```bash
-# Terminal 1 - User app
-npm run dev
+## Oversight tools (actions and governance)
 
-# Terminal 2 - Admin app
-cd apps/admin && npm run dev
-```
+Administrative capabilities are expressed as controlled state transitions:
 
-### Option 2: Using concurrently (if installed)
-```bash
-npm run dev:all
-```
+- **Disputes**: review and resolve disputes with explicit accept/reject actions.
+- **User role transitions**: restore trading access or enforce bans, with auditable intent.
+- **Incident response**: correlate security events and ML signals to support rapid containment.
 
-## Access
+## Analytics (money flow and approval logic)
 
-- **User App**: http://localhost:3000
-- **Admin App**: http://localhost:3001
+Analytics panels are decision aids, not accounting systems:
 
-## Notes
+- **Money flow**: a high-level proxy for platform activity, derived from authoritative trade events and summarized over time.
+- **Trade review**: ranked lists that prioritize “high impact” behavior for manual review.
 
-- The admin app shares the same `src/` directory with the main app for shared components and services
-- Authentication is shared via localStorage
-- Admin routes are now at the root level (e.g., `/dashboard` instead of `/admin/dashboard`)
+## Security boundaries and trust model
 
+- **Backend remains authoritative**: this UI does not define truth; it requests, renders, and submits actions.
+- **RBAC is the boundary**: administrative visibility is a permissioned lens, not a separate backend.
+- **Observability is first-class**: every administrative action must be reviewable and attributable.
+
+## Documentation pointer
+
+For repository-wide navigation, see `docs/PROJECT_MAP.md`.

@@ -24,11 +24,17 @@ export default function MarketManagementTable() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<{ type: string; marketId: string } | null>(null);
 
+  // Fetch ALL markets using pagination
   const { data: markets, error, mutate } = useSWR(
-    "/markets/?limit=100",
-    fetcher,
+    "/markets/", // No limit - will fetch all pages
+    async (url) => {
+      // Use pagination utility to fetch all markets
+      const { fetchAllFromPaginatedEndpoint } = await import("@/lib/utils/pagination");
+      const api = (await import("@/lib/api")).default;
+      return fetchAllFromPaginatedEndpoint(api, url, {}, 100);
+    },
     {
-      refreshInterval: 5000,
+      refreshInterval: 10000, // Refresh every 10s
       revalidateOnFocus: true,
     }
   );
@@ -96,7 +102,8 @@ export default function MarketManagementTable() {
     }
   };
 
-  const marketsList = markets?.results || markets || [];
+  // Markets is already an array (all pages fetched)
+  const marketsList = Array.isArray(markets) ? markets : [];
 
   return (
     <>

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Wallet, ExternalLink, Check, Copy, AlertCircle } from 'lucide-react';
+import { X, Wallet, ExternalLink, AlertCircle, Check } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { renderAddress } from '../../lib/utils/wallet';
 
 const WALLETS = [
   {
@@ -31,7 +32,6 @@ export default function ConnectWalletModal({ isOpen, onClose, onConnect }) {
   const [connecting, setConnecting] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState(null);
   const [connectedAddress, setConnectedAddress] = useState(null);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     // Check if already connected
@@ -188,15 +188,6 @@ export default function ConnectWalletModal({ isOpen, onClose, onConnect }) {
     }
   };
 
-  const handleCopyAddress = () => {
-    if (connectedAddress) {
-      navigator.clipboard.writeText(connectedAddress);
-      setCopied(true);
-      toast.success('Address copied to clipboard!');
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   const handleDisconnect = () => {
     localStorage.removeItem('walletAddress');
     localStorage.removeItem('walletType');
@@ -205,11 +196,6 @@ export default function ConnectWalletModal({ isOpen, onClose, onConnect }) {
     if (onConnect) {
       onConnect(null);
     }
-  };
-
-  const formatAddress = (address) => {
-    if (!address) return '';
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
   if (!isOpen) return null;
@@ -276,30 +262,11 @@ export default function ConnectWalletModal({ isOpen, onClose, onConnect }) {
                 <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Wallet Address
+                      Wallet Connected
                     </span>
-                    <button
-                      onClick={handleCopyAddress}
-                      className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="h-3 w-3" />
-                          Copied
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-3 w-3" />
-                          Copy
-                        </>
-                      )}
-                    </button>
                   </div>
-                  <p className="font-mono text-sm text-gray-900 dark:text-white break-all">
-                    {connectedAddress}
-                  </p>
-                  <p className="font-mono text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {formatAddress(connectedAddress)}
+                  <p className="font-mono text-sm text-gray-900 dark:text-white">
+                    {renderAddress(connectedAddress, 'public')}
                   </p>
                 </div>
 
